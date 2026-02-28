@@ -1,11 +1,18 @@
-# Pole Plate OCR (EasyOCR)
+# Pole Plate OCR (Multi-Engine)
 
-This folder contains an out-of-the-box EasyOCR pipeline for extracting pole
-plate text from images in `model/images`.
+This folder contains a multi-engine OCR pipeline for extracting pole plate text
+from images in `model/images`.
 
 ## What it does
 
-- Uses EasyOCR English model with plate-safe character allowlist.
+- Runs multiple OCR engines over the same preprocessed image variants:
+  - `easyocr`
+  - `tesseract`
+  - `paddleocr`
+  - `kraken` (CLI + model file)
+  - `gocr` (CLI)
+- Keeps the existing preprocessing pipeline (brightness/contrast/saturation + grayscale/CLAHE/etc).
+- Keeps ROI crop detection, confusion normalization, template-aware scoring, and consensus voting.
 - Tries multiple image preprocessing variants for each image, including
   brightness/contrast/saturation adjustments.
 - Applies confusion-aware canonicalization (e.g. `IPD` -> `PD`, `6-####` -> `C-####`).
@@ -40,11 +47,14 @@ Optional flags:
 ```bash
 python plate_ocr.py --top-k 5 --min-score 0.45
 python plate_ocr.py --images-dir ./images --output-dir ./output --model-dir ./easyocr_models
+python plate_ocr.py --engines easyocr,tesseract,paddleocr
+python plate_ocr.py --engines easyocr,kraken --kraken-model /path/to/model.mlmodel
 ```
 
 ## Notes
 
 - The first run downloads EasyOCR model files.
+- `kraken` and `gocr` are CLI binaries and must be installed in `PATH`.
+- `kraken` requires `--kraken-model` to run.
+- If an engine is unavailable, the script logs a warning and continues with available engines.
 - The script sets certificate bundle env vars via `certifi` to avoid SSL issues.
-- If OCR misses some plates, gather labeled crops and train a custom recognizer
-  next; this repo currently uses out-of-the-box EasyOCR as requested.

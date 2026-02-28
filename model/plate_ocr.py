@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Run EasyOCR over pole plate images and save plate text predictions."""
+"""Run multi-engine OCR over pole plate images and save plate text predictions.
+
+This keeps the existing preprocessing and postprocessing logic, but runs multiple
+OCR engines over each variant:
+  - easyocr
+  - tesseract
+  - paddleocr
+  - kraken (CLI, requires model path)
+  - gocr (CLI)
+"""
 
 from __future__ import annotations
 
@@ -9,6 +18,9 @@ import json
 import math
 import os
 import re
+import shutil
+import subprocess
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,7 +34,22 @@ import numpy as np
 os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 os.environ.setdefault("REQUESTS_CA_BUNDLE", certifi.where())
 
-import easyocr
+try:
+    import easyocr
+except Exception:
+    easyocr = None
+
+try:
+    import pytesseract
+    from pytesseract import Output as TesseractOutput
+except Exception:
+    pytesseract = None
+    TesseractOutput = None
+
+try:
+    from paddleocr import PaddleOCR
+except Exception:
+    PaddleOCR = None
 
 
 PLATE_LIKE_PATTERNS = (
@@ -62,6 +89,22 @@ DASH_PLATE_FIRST_CHAR_MAP = {
     "D": "D",
 }
 
+ENGINE_CONFIDENCE_SCALE = {
+    "easyocr": 1.00,
+    "tesseract": 0.95,
+    "paddleocr": 1.00,
+    "kraken": 0.90,
+    "gocr": 0.75,
+}
+
+ENGINE_VOTE_BONUS = {
+    "easyocr": 0.05,
+    "tesseract": 0.04,
+    "paddleocr": 0.05,
+    "kraken": 0.02,
+    "gocr": 0.00,
+}
+
 COLOR_ADJUSTMENTS = (
     ("adj_b-30_c0.90_s0.85", -30, 0.90, 0.85),
     ("adj_b-15_c1.00_s0.90", -15, 1.00, 0.90),
@@ -70,6 +113,15 @@ COLOR_ADJUSTMENTS = (
     ("adj_b+30_c1.15_s1.20", 30, 1.15, 1.20),
     ("adj_b+10_c1.20_s0.95", 10, 1.20, 0.95),
 )
+
+SUPPORTED_ENGINES = {"easyocr", "tesseract", "paddleocr", "kraken", "gocr"}
+
+
+@dataclass(frozen=True)
+class OCRToken:
+    text: str
+    confidence: float
+    bbox: list[list[float]]
 
 
 @dataclass(frozen=True)
@@ -96,6 +148,258 @@ class AggregateCandidate:
     def __post_init__(self) -> None:
         if self.variants is None:
             self.variants = set()
+
+
+class OCREngine:
+    name: str
+
+    def read(
+        self,
+        image: np.ndarray,
+        allowlist: str,
+        temp_dir: Path,
+    ) -> list[OCRToken]:
+        raise NotImplementedError
+
+
+class EasyOCREngine(OCREngine):
+    name = "easyocr"
+
+    def __init__(self, reader: "easyocr.Reader") -> None:
+        self.reader = reader
+
+    def read(
+        self,
+        image: np.ndarray,
+        allowlist: str,
+        temp_dir: Path,
+    ) -> list[OCRToken]:
+        results = self.reader.readtext(
+            image,
+            detail=1,
+            paragraph=False,
+            decoder="beamsearch",
+            beamWidth=5,
+            allowlist=allowlist,
+            min_size=8,
+            text_threshold=0.55,
+            low_text=0.30,
+            link_threshold=0.30,
+            canvas_size=2560,
+            mag_ratio=1.5,
+        )
+        tokens: list[OCRToken] = []
+        for bbox, text, confidence in results:
+            tokens.append(
+                OCRToken(
+                    text=str(text),
+                    confidence=float(confidence),
+                    bbox=[[float(x), float(y)] for x, y in bbox],
+                )
+            )
+        return tokens
+
+
+class TesseractEngine(OCREngine):
+    name = "tesseract"
+
+    def read(
+        self,
+        image: np.ndarray,
+        allowlist: str,
+        temp_dir: Path,
+    ) -> list[OCRToken]:
+        if pytesseract is None or TesseractOutput is None:
+            return []
+
+        gray = image
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        config = (
+            f"--oem 3 --psm 6 -c tessedit_char_whitelist={allowlist} "
+            "-c preserve_interword_spaces=0"
+        )
+        try:
+            data = pytesseract.image_to_data(
+                gray,
+                output_type=TesseractOutput.DICT,
+                config=config,
+            )
+        except Exception:
+            return []
+
+        tokens: list[OCRToken] = []
+        total = len(data.get("text", []))
+        for i in range(total):
+            raw_text = str(data["text"][i]).strip()
+            if not raw_text:
+                continue
+            try:
+                conf_raw = float(data["conf"][i])
+            except Exception:
+                continue
+            if conf_raw < 0:
+                continue
+            confidence = max(0.0, min(1.0, conf_raw / 100.0))
+            x = int(data["left"][i])
+            y = int(data["top"][i])
+            w = int(data["width"][i])
+            h = int(data["height"][i])
+            bbox = [
+                [float(x), float(y)],
+                [float(x + w), float(y)],
+                [float(x + w), float(y + h)],
+                [float(x), float(y + h)],
+            ]
+            tokens.append(OCRToken(text=raw_text, confidence=confidence, bbox=bbox))
+        return tokens
+
+
+class PaddleOCREngine(OCREngine):
+    name = "paddleocr"
+
+    def __init__(self, gpu: bool) -> None:
+        self.ocr = PaddleOCR(
+            use_angle_cls=False,
+            lang="en",
+            use_gpu=gpu,
+            show_log=False,
+        )
+
+    def read(
+        self,
+        image: np.ndarray,
+        allowlist: str,
+        temp_dir: Path,
+    ) -> list[OCRToken]:
+        if len(image.shape) == 2:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        try:
+            result = self.ocr.ocr(image, cls=False)
+        except Exception:
+            return []
+        if not result or not result[0]:
+            return []
+
+        tokens: list[OCRToken] = []
+        for line in result[0]:
+            if not line or len(line) < 2:
+                continue
+            bbox = line[0]
+            text = str(line[1][0])
+            confidence = float(line[1][1])
+            tokens.append(
+                OCRToken(
+                    text=text,
+                    confidence=confidence,
+                    bbox=[[float(x), float(y)] for x, y in bbox],
+                )
+            )
+        return tokens
+
+
+class KrakenEngine(OCREngine):
+    name = "kraken"
+
+    def __init__(self, model_path: Path, timeout_sec: int) -> None:
+        self.model_path = model_path
+        self.timeout_sec = timeout_sec
+
+    def read(
+        self,
+        image: np.ndarray,
+        allowlist: str,
+        temp_dir: Path,
+    ) -> list[OCRToken]:
+        in_file = tempfile.NamedTemporaryFile(
+            suffix=".png",
+            dir=temp_dir,
+            delete=False,
+        )
+        out_file = tempfile.NamedTemporaryFile(
+            suffix=".txt",
+            dir=temp_dir,
+            delete=False,
+        )
+        in_path = Path(in_file.name)
+        out_path = Path(out_file.name)
+        in_file.close()
+        out_file.close()
+        try:
+            cv2.imwrite(str(in_path), image)
+            cmd = [
+                "kraken",
+                "-i",
+                str(in_path),
+                str(out_path),
+                "binarize",
+                "segment",
+                "ocr",
+                "-m",
+                str(self.model_path),
+            ]
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=self.timeout_sec,
+                check=False,
+            )
+            if proc.returncode != 0 or not out_path.exists():
+                return []
+            text_blob = out_path.read_text(encoding="utf-8", errors="ignore")
+            tokens = []
+            for token in re.findall(r"[A-Za-z0-9-]+", text_blob):
+                tokens.append(OCRToken(text=token, confidence=0.58, bbox=[]))
+            return tokens
+        except Exception:
+            return []
+        finally:
+            in_path.unlink(missing_ok=True)
+            out_path.unlink(missing_ok=True)
+
+
+class GOCREngine(OCREngine):
+    name = "gocr"
+
+    def __init__(self, timeout_sec: int) -> None:
+        self.timeout_sec = timeout_sec
+
+    def read(
+        self,
+        image: np.ndarray,
+        allowlist: str,
+        temp_dir: Path,
+    ) -> list[OCRToken]:
+        in_file = tempfile.NamedTemporaryFile(
+            suffix=".png",
+            dir=temp_dir,
+            delete=False,
+        )
+        in_path = Path(in_file.name)
+        in_file.close()
+        try:
+            cv2.imwrite(str(in_path), image)
+            cmd = ["gocr", "-i", str(in_path), "-C", allowlist]
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=self.timeout_sec,
+                check=False,
+            )
+            if proc.returncode != 0:
+                return []
+            text_blob = proc.stdout
+            tokens = []
+            for token in re.findall(r"[A-Za-z0-9-]+", text_blob):
+                tokens.append(OCRToken(text=token, confidence=0.45, bbox=[]))
+            return tokens
+        except Exception:
+            return []
+        finally:
+            in_path.unlink(missing_ok=True)
 
 
 def parse_args() -> argparse.Namespace:
@@ -125,6 +429,23 @@ def parse_args() -> argparse.Namespace:
         help="Characters allowed during OCR decoding.",
     )
     parser.add_argument(
+        "--engines",
+        default="easyocr,tesseract,paddleocr,kraken,gocr",
+        help="Comma-separated OCR engines to run.",
+    )
+    parser.add_argument(
+        "--kraken-model",
+        type=Path,
+        default=None,
+        help="Path to Kraken OCR model (.mlmodel). Required when kraken is enabled.",
+    )
+    parser.add_argument(
+        "--subprocess-timeout",
+        type=int,
+        default=20,
+        help="Timeout in seconds for CLI OCR engines (kraken/gocr).",
+    )
+    parser.add_argument(
         "--top-k",
         type=int,
         default=4,
@@ -142,6 +463,18 @@ def parse_args() -> argparse.Namespace:
         help="Use GPU for OCR if available.",
     )
     return parser.parse_args()
+
+
+def parse_engine_list(raw: str) -> list[str]:
+    engines: list[str] = []
+    for item in raw.split(","):
+        name = item.strip().lower()
+        if not name:
+            continue
+        if name not in SUPPORTED_ENGINES:
+            continue
+        engines.append(name)
+    return engines
 
 
 def normalize_text(text: str) -> str:
@@ -196,17 +529,14 @@ def candidate_forms(text: str) -> list[tuple[str, float]]:
     """Generate confusion-aware normalized alternatives with penalties."""
     forms: dict[str, float] = {text: 0.0}
 
-    # Remove one noisy leading character before common two-letter prefixes.
     if re.fullmatch(r"^[IJ1L](?:PD|IPD|JPD|[A-Z]{1,3})\d{3,7}$", text):
         forms[text[1:]] = min(forms.get(text[1:], 1.0), 0.03)
 
-    # Normalize common noisy PD prefixes (e.g. IPD41459 -> PD41459).
     m = re.fullmatch(r"^[IJ1L]?P?D([A-Z0-9]{4,6})$", text)
     if m:
         normalized = "PD" + letters_to_digits(m.group(1))
         forms[normalized] = min(forms.get(normalized, 1.0), 0.02)
 
-    # Normalize A-1234 style plates where first character is often confused.
     m = re.fullmatch(r"^([A-Z0-9])-([A-Z0-9]{4})$", text)
     if m:
         first, tail = m.groups()
@@ -219,21 +549,17 @@ def candidate_forms(text: str) -> list[tuple[str, float]]:
             normalized = f"{first}-{tail_digits}"
             forms[normalized] = min(forms.get(normalized, 1.0), 0.02)
 
-    # Preserve alpha prefix and force numeric suffix when shape matches.
     m = re.fullmatch(r"^([A-Z]{1,4})([A-Z0-9]{3,7})$", text)
     if m:
         prefix, suffix = m.groups()
-        # Avoid converting plain words like WARNING into fake plate-looking strings.
         if sum(ch.isdigit() for ch in suffix) >= 2:
             normalized = prefix + letters_to_digits(suffix)
             forms[normalized] = min(forms.get(normalized, 1.0), 0.02)
 
-    # Numeric plate fallback with OCR letter confusions coerced to digits.
     if re.fullmatch(r"^[A-Z0-9]{5,8}$", text):
         numeric = letters_to_digits(text)
         if re.fullmatch(r"^\d{5,8}$", numeric):
             forms[numeric] = min(forms.get(numeric, 1.0), 0.04)
-            # Leading digit on embossed tags is frequently confused with 7.
             if len(numeric) == 6 and numeric[0] in {"5", "6", "8"}:
                 leading7 = "7" + numeric[1:]
                 forms[leading7] = min(forms.get(leading7, 1.0), 0.08)
@@ -317,7 +643,6 @@ def detect_plate_rois(image_bgr: np.ndarray, max_rois: int = 10) -> list[np.ndar
             continue
         perimeter = cv2.arcLength(contour, True)
         approx = cv2.approxPolyDP(contour, 0.03 * perimeter, True)
-        # Favor shape complexity close to plates/signs.
         shape_score = 1.0
         if 3 <= len(approx) <= 10:
             shape_score += 0.25
@@ -327,7 +652,6 @@ def detect_plate_rois(image_bgr: np.ndarray, max_rois: int = 10) -> list[np.ndar
     rois: list[np.ndarray] = []
     seen_boxes: list[tuple[int, int, int, int]] = []
     for _, (x, y, bw, bh) in candidates:
-        # Basic overlap suppression.
         suppress = False
         for ox, oy, ow, oh in seen_boxes:
             ix1, iy1 = max(x, ox), max(y, oy)
@@ -359,9 +683,10 @@ def detect_plate_rois(image_bgr: np.ndarray, max_rois: int = 10) -> list[np.ndar
 
 
 def extract_candidates(
-    reader: easyocr.Reader,
+    engines: list[OCREngine],
     image_path: Path,
     allowlist: str,
+    temp_dir: Path,
 ) -> list[Candidate]:
     image = cv2.imread(str(image_path))
     if image is None:
@@ -375,56 +700,50 @@ def extract_candidates(
     for region_name, region_image in region_images:
         variants = image_variants(region_image)
         for variant_name, variant_img in variants.items():
-            results = reader.readtext(
-                variant_img,
-                detail=1,
-                paragraph=False,
-                decoder="beamsearch",
-                beamWidth=5,
-                allowlist=allowlist,
-                min_size=8,
-                text_threshold=0.55,
-                low_text=0.30,
-                link_threshold=0.30,
-                canvas_size=2560,
-                mag_ratio=1.5,
-            )
-            for bbox, raw_text, confidence in results:
-                raw_normalized = normalize_text(raw_text)
-                if not raw_normalized:
-                    continue
-                for text, penalty in candidate_forms(raw_normalized):
-                    if not is_plate_like(text):
+            for engine in engines:
+                tokens = engine.read(variant_img, allowlist, temp_dir)
+                for token in tokens:
+                    raw_normalized = normalize_text(token.text)
+                    if not raw_normalized:
                         continue
-                    adjusted_confidence = max(0.0, float(confidence) - penalty)
-                    score = score_candidate(text, adjusted_confidence)
-                    vote_weight = adjusted_confidence + (0.35 * template_bonus(text))
-                    vote_weight += 0.05 if region_name != "full" else 0.0
+                    for text, penalty in candidate_forms(raw_normalized):
+                        if not is_plate_like(text):
+                            continue
 
-                    agg = aggregates.get(text)
-                    if agg is None:
-                        agg = AggregateCandidate(
-                            text=text,
-                            best_confidence=adjusted_confidence,
-                            best_score=score,
-                            best_variant=f"{region_name}:{variant_name}",
-                            best_bbox=[[float(x), float(y)] for x, y in bbox],
-                        )
-                        aggregates[text] = agg
+                        engine_scale = ENGINE_CONFIDENCE_SCALE.get(engine.name, 1.0)
+                        base_conf = float(token.confidence) * engine_scale
+                        adjusted_confidence = max(0.0, min(1.0, base_conf - penalty))
+                        score = score_candidate(text, adjusted_confidence)
 
-                    agg.hit_count += 1
-                    agg.confidence_sum += adjusted_confidence
-                    agg.weighted_votes += vote_weight
-                    agg.variants.add(f"{region_name}:{variant_name}")
+                        vote_weight = adjusted_confidence + (0.35 * template_bonus(text))
+                        vote_weight += ENGINE_VOTE_BONUS.get(engine.name, 0.0)
+                        vote_weight += 0.05 if region_name != "full" else 0.0
 
-                    if adjusted_confidence > agg.best_confidence or (
-                        adjusted_confidence == agg.best_confidence
-                        and score > agg.best_score
-                    ):
-                        agg.best_confidence = adjusted_confidence
-                        agg.best_score = score
-                        agg.best_variant = f"{region_name}:{variant_name}"
-                        agg.best_bbox = [[float(x), float(y)] for x, y in bbox]
+                        channel = f"{engine.name}:{region_name}:{variant_name}"
+                        agg = aggregates.get(text)
+                        if agg is None:
+                            agg = AggregateCandidate(
+                                text=text,
+                                best_confidence=adjusted_confidence,
+                                best_score=score,
+                                best_variant=channel,
+                                best_bbox=token.bbox,
+                            )
+                            aggregates[text] = agg
+
+                        agg.hit_count += 1
+                        agg.confidence_sum += adjusted_confidence
+                        agg.weighted_votes += vote_weight
+                        agg.variants.add(channel)
+
+                        if adjusted_confidence > agg.best_confidence or (
+                            adjusted_confidence == agg.best_confidence
+                            and score > agg.best_score
+                        ):
+                            agg.best_confidence = adjusted_confidence
+                            agg.best_score = score
+                            agg.best_variant = channel
+                            agg.best_bbox = token.bbox
 
     candidates: list[Candidate] = []
     for agg in aggregates.values():
@@ -514,6 +833,67 @@ def iter_images(images_dir: Path) -> Iterable[Path]:
     )
 
 
+def build_engines(args: argparse.Namespace) -> tuple[list[OCREngine], list[str]]:
+    requested = parse_engine_list(args.engines)
+    warnings: list[str] = []
+    engines: list[OCREngine] = []
+
+    if "easyocr" in requested:
+        if easyocr is None:
+            warnings.append("easyocr requested but package is not installed.")
+        else:
+            reader = easyocr.Reader(
+                ["en"],
+                gpu=args.gpu,
+                model_storage_directory=str(args.model_dir),
+                download_enabled=True,
+                verbose=False,
+            )
+            engines.append(EasyOCREngine(reader))
+
+    if "tesseract" in requested:
+        if pytesseract is None:
+            warnings.append("tesseract requested but pytesseract package is not installed.")
+        elif shutil.which("tesseract") is None:
+            warnings.append("tesseract requested but `tesseract` binary is not installed.")
+        else:
+            engines.append(TesseractEngine())
+
+    if "paddleocr" in requested:
+        if PaddleOCR is None:
+            warnings.append("paddleocr requested but paddleocr package is not installed.")
+        else:
+            try:
+                engines.append(PaddleOCREngine(gpu=args.gpu))
+            except Exception as exc:
+                warnings.append(f"paddleocr failed to initialize: {exc}")
+
+    if "kraken" in requested:
+        if shutil.which("kraken") is None:
+            warnings.append("kraken requested but `kraken` CLI is not installed.")
+        elif args.kraken_model is None:
+            warnings.append("kraken requested but --kraken-model was not provided.")
+        elif not args.kraken_model.exists():
+            warnings.append(
+                f"kraken requested but model file was not found: {args.kraken_model}"
+            )
+        else:
+            engines.append(
+                KrakenEngine(
+                    model_path=args.kraken_model,
+                    timeout_sec=args.subprocess_timeout,
+                )
+            )
+
+    if "gocr" in requested:
+        if shutil.which("gocr") is None:
+            warnings.append("gocr requested but `gocr` binary is not installed.")
+        else:
+            engines.append(GOCREngine(timeout_sec=args.subprocess_timeout))
+
+    return engines, warnings
+
+
 def main() -> int:
     args = parse_args()
     images_dir = args.images_dir.resolve()
@@ -522,13 +902,19 @@ def main() -> int:
     model_dir.mkdir(parents=True, exist_ok=True)
 
     os.environ["EASYOCR_MODULE_PATH"] = str(model_dir)
-    reader = easyocr.Reader(
-        ["en"],
-        gpu=args.gpu,
-        model_storage_directory=str(model_dir),
-        download_enabled=True,
-        verbose=False,
-    )
+    args.model_dir = model_dir
+
+    engines, warnings = build_engines(args)
+    if warnings:
+        print("\nEngine warnings:")
+        for warning in warnings:
+            print(f"- {warning}")
+
+    if not engines:
+        print("No OCR engines initialized. Install requested dependencies and try again.")
+        return 1
+
+    print(f"\nUsing engines: {', '.join(engine.name for engine in engines)}")
 
     image_paths = list(iter_images(images_dir))
     if not image_paths:
@@ -536,31 +922,38 @@ def main() -> int:
         return 1
 
     rows: list[dict[str, object]] = []
-    for image_path in image_paths:
-        candidates = extract_candidates(reader, image_path, args.allowlist)
-        filtered = [c for c in candidates if c.score >= args.min_score]
-        filtered = sorted(filtered, key=selection_key, reverse=True)[: args.top_k]
-        if filtered:
-            best = filtered[0]
-            row = {
-                "image": image_path.name,
-                "best_plate": best.text,
-                "best_score": f"{best.score:.4f}",
-                "best_confidence": f"{best.confidence:.4f}",
-                "best_variant": best.variant,
-                "plate_candidates": "|".join(c.text for c in filtered),
-            }
-        else:
-            row = {
-                "image": image_path.name,
-                "best_plate": "",
-                "best_score": "",
-                "best_confidence": "",
-                "best_variant": "",
-                "plate_candidates": "",
-            }
-        rows.append(row)
-        print(f"{image_path.name}: {row['plate_candidates'] or 'NO_PLATE_FOUND'}")
+    with tempfile.TemporaryDirectory(prefix="plateocr_") as temp_dir_str:
+        temp_dir = Path(temp_dir_str)
+        for image_path in image_paths:
+            candidates = extract_candidates(
+                engines=engines,
+                image_path=image_path,
+                allowlist=args.allowlist,
+                temp_dir=temp_dir,
+            )
+            filtered = [c for c in candidates if c.score >= args.min_score]
+            filtered = sorted(filtered, key=selection_key, reverse=True)[: args.top_k]
+            if filtered:
+                best = filtered[0]
+                row = {
+                    "image": image_path.name,
+                    "best_plate": best.text,
+                    "best_score": f"{best.score:.4f}",
+                    "best_confidence": f"{best.confidence:.4f}",
+                    "best_variant": best.variant,
+                    "plate_candidates": "|".join(c.text for c in filtered),
+                }
+            else:
+                row = {
+                    "image": image_path.name,
+                    "best_plate": "",
+                    "best_score": "",
+                    "best_confidence": "",
+                    "best_variant": "",
+                    "plate_candidates": "",
+                }
+            rows.append(row)
+            print(f"{image_path.name}: {row['plate_candidates'] or 'NO_PLATE_FOUND'}")
 
     csv_path, json_path = write_outputs(rows, output_dir)
     print(f"\nSaved CSV:  {csv_path}")
