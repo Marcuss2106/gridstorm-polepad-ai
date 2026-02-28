@@ -8,8 +8,9 @@ plate text from images in `model/images`.
 - Uses EasyOCR English model with plate-safe character allowlist.
 - Tries multiple image preprocessing variants for each image, including
   brightness/contrast/saturation adjustments.
-- Selects the final plate by highest OCR confidence across variants (score still
-  used for filtering/tie-breaks).
+- Applies confusion-aware canonicalization (e.g. `IPD` -> `PD`, `6-####` -> `C-####`).
+- Uses template-aware scoring for likely plate formats (`PD#####`, `X-####`, numeric tags).
+- Uses consensus voting across all OCR variants to rank final candidates.
 - Writes results to:
   - `model/output/plate_predictions.csv`
   - `model/output/plate_predictions.json`

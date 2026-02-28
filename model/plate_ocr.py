@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import os
 import re
 from dataclasses import dataclass
@@ -30,6 +31,36 @@ PLATE_LIKE_PATTERNS = (
     re.compile(r"^\d{4,8}$"),
 )
 
+TEMPLATE_PATTERNS = (
+    (re.compile(r"^PD\d{5}$"), 0.40),
+    (re.compile(r"^[A-Z]-\d{4}$"), 0.35),
+    (re.compile(r"^\d{6}$"), 0.25),
+    (re.compile(r"^\d{5}$"), 0.20),
+    (re.compile(r"^[A-Z]{2,4}\d{4,6}$"), 0.15),
+)
+
+LETTER_TO_DIGIT = {
+    "O": "0",
+    "Q": "0",
+    "D": "0",
+    "I": "1",
+    "L": "1",
+    "Z": "2",
+    "S": "5",
+    "B": "8",
+    "G": "6",
+    "C": "6",
+}
+
+DASH_PLATE_FIRST_CHAR_MAP = {
+    "6": "C",
+    "G": "C",
+    "0": "C",
+    "O": "C",
+    "C": "C",
+    "D": "D",
+}
+
 COLOR_ADJUSTMENTS = (
     ("adj_b-30_c0.90_s0.85", -30, 0.90, 0.85),
     ("adj_b-15_c1.00_s0.90", -15, 1.00, 0.90),
@@ -47,6 +78,23 @@ class Candidate:
     score: float
     variant: str
     bbox: list[list[float]]
+
+
+@dataclass
+class AggregateCandidate:
+    text: str
+    best_confidence: float
+    best_score: float
+    best_variant: str
+    best_bbox: list[list[float]]
+    hit_count: int = 0
+    weighted_votes: float = 0.0
+    confidence_sum: float = 0.0
+    variants: set[str] | None = None
+
+    def __post_init__(self) -> None:
+        if self.variants is None:
+            self.variants = set()
 
 
 def parse_args() -> argparse.Namespace:
@@ -113,19 +161,74 @@ def is_plate_like(text: str) -> bool:
     return alnum_ratio >= 0.75
 
 
+def template_bonus(text: str) -> float:
+    for pattern, bonus in TEMPLATE_PATTERNS:
+        if pattern.fullmatch(text):
+            return bonus
+    return 0.0
+
+
 def score_candidate(text: str, confidence: float) -> float:
     score = confidence
     if 4 <= len(text) <= 10:
         score += 0.10
     if any(ch.isalpha() for ch in text) and any(ch.isdigit() for ch in text):
         score += 0.10
-    for pattern in PLATE_LIKE_PATTERNS:
-        if pattern.fullmatch(text):
-            score += 0.25
-            break
+    if any(pattern.fullmatch(text) for pattern in PLATE_LIKE_PATTERNS):
+        score += 0.15
+    score += template_bonus(text)
     if text.count("-") > 1:
         score -= 0.08
+    if "-" in text and not re.fullmatch(r"^[A-Z]-\d{4}$", text):
+        score -= 0.05
     return score
+
+
+def letters_to_digits(text: str) -> str:
+    return "".join(LETTER_TO_DIGIT.get(ch, ch) for ch in text)
+
+
+def candidate_forms(text: str) -> list[tuple[str, float]]:
+    """Generate confusion-aware normalized alternatives with penalties."""
+    forms: dict[str, float] = {text: 0.0}
+
+    # Remove one noisy leading character before common two-letter prefixes.
+    if re.fullmatch(r"^[IJ1L](?:PD|IPD|JPD|[A-Z]{1,3})\d{3,7}$", text):
+        forms[text[1:]] = min(forms.get(text[1:], 1.0), 0.03)
+
+    # Normalize common noisy PD prefixes (e.g. IPD41459 -> PD41459).
+    m = re.fullmatch(r"^[IJ1L]?P?D([A-Z0-9]{4,6})$", text)
+    if m:
+        normalized = "PD" + letters_to_digits(m.group(1))
+        forms[normalized] = min(forms.get(normalized, 1.0), 0.02)
+
+    # Normalize A-1234 style plates where first character is often confused.
+    m = re.fullmatch(r"^([A-Z0-9])-([A-Z0-9]{4})$", text)
+    if m:
+        first, tail = m.groups()
+        tail_digits = letters_to_digits(tail)
+        mapped_first = DASH_PLATE_FIRST_CHAR_MAP.get(first)
+        if mapped_first:
+            normalized = f"{mapped_first}-{tail_digits}"
+            forms[normalized] = min(forms.get(normalized, 1.0), 0.05)
+        if first.isalpha():
+            normalized = f"{first}-{tail_digits}"
+            forms[normalized] = min(forms.get(normalized, 1.0), 0.02)
+
+    # Preserve alpha prefix and force numeric suffix when shape matches.
+    m = re.fullmatch(r"^([A-Z]{1,4})([A-Z0-9]{3,7})$", text)
+    if m:
+        prefix, suffix = m.groups()
+        normalized = prefix + letters_to_digits(suffix)
+        forms[normalized] = min(forms.get(normalized, 1.0), 0.02)
+
+    # Numeric plate fallback with OCR letter confusions coerced to digits.
+    if re.fullmatch(r"^[A-Z0-9]{5,8}$", text):
+        numeric = letters_to_digits(text)
+        if re.fullmatch(r"^\d{5,8}$", numeric):
+            forms[numeric] = min(forms.get(numeric, 1.0), 0.04)
+
+    return sorted(forms.items(), key=lambda item: item[1])
 
 
 def adjust_brightness_contrast_saturation(
@@ -187,7 +290,7 @@ def extract_candidates(
         return []
 
     variants = image_variants(image)
-    best_by_text: dict[str, Candidate] = {}
+    aggregates: dict[str, AggregateCandidate] = {}
     for variant_name, variant_img in variants.items():
         results = reader.readtext(
             variant_img,
@@ -204,30 +307,59 @@ def extract_candidates(
             mag_ratio=1.5,
         )
         for bbox, raw_text, confidence in results:
-            text = normalize_text(raw_text)
-            if not text or not is_plate_like(text):
+            raw_normalized = normalize_text(raw_text)
+            if not raw_normalized:
                 continue
-            score = score_candidate(text, float(confidence))
-            current = best_by_text.get(text)
-            candidate = Candidate(
-                text=text,
-                confidence=float(confidence),
-                score=score,
-                variant=variant_name,
-                bbox=[[float(x), float(y)] for x, y in bbox],
+            for text, penalty in candidate_forms(raw_normalized):
+                if not is_plate_like(text):
+                    continue
+                adjusted_confidence = max(0.0, float(confidence) - penalty)
+                score = score_candidate(text, adjusted_confidence)
+                vote_weight = adjusted_confidence + (0.35 * template_bonus(text))
+
+                agg = aggregates.get(text)
+                if agg is None:
+                    agg = AggregateCandidate(
+                        text=text,
+                        best_confidence=adjusted_confidence,
+                        best_score=score,
+                        best_variant=variant_name,
+                        best_bbox=[[float(x), float(y)] for x, y in bbox],
+                    )
+                    aggregates[text] = agg
+
+                agg.hit_count += 1
+                agg.confidence_sum += adjusted_confidence
+                agg.weighted_votes += vote_weight
+                agg.variants.add(variant_name)
+
+                if adjusted_confidence > agg.best_confidence or (
+                    adjusted_confidence == agg.best_confidence and score > agg.best_score
+                ):
+                    agg.best_confidence = adjusted_confidence
+                    agg.best_score = score
+                    agg.best_variant = variant_name
+                    agg.best_bbox = [[float(x), float(y)] for x, y in bbox]
+
+    candidates: list[Candidate] = []
+    for agg in aggregates.values():
+        variant_support = min(0.18, 0.04 * max(0, len(agg.variants) - 1))
+        hit_support = min(0.22, 0.05 * math.log1p(max(0, agg.hit_count - 1)))
+        vote_support = min(0.20, 0.03 * agg.weighted_votes)
+        consensus_score = agg.best_score + variant_support + hit_support + vote_support
+        candidates.append(
+            Candidate(
+                text=agg.text,
+                confidence=agg.best_confidence,
+                score=consensus_score,
+                variant=agg.best_variant,
+                bbox=agg.best_bbox,
             )
-            if current is None or (
-                candidate.confidence > current.confidence
-                or (
-                    candidate.confidence == current.confidence
-                    and candidate.score > current.score
-                )
-            ):
-                best_by_text[text] = candidate
+        )
 
     return sorted(
-        best_by_text.values(),
-        key=lambda c: (c.confidence, c.score),
+        candidates,
+        key=lambda c: (c.score, c.confidence),
         reverse=True,
     )
 
@@ -299,7 +431,7 @@ def main() -> int:
         candidates = extract_candidates(reader, image_path, args.allowlist)
         filtered = [c for c in candidates if c.score >= args.min_score][: args.top_k]
         if filtered:
-            best = max(filtered, key=lambda c: (c.confidence, c.score))
+            best = max(filtered, key=lambda c: (c.score, c.confidence))
             row = {
                 "image": image_path.name,
                 "best_plate": best.text,
