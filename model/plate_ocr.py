@@ -464,6 +464,15 @@ def pattern_priority(text: str) -> float:
     return 0.0
 
 
+def selection_key(candidate: Candidate) -> tuple[float, float, float]:
+    """Single ordering key for both best plate and top-candidates display."""
+    return (
+        pattern_priority(candidate.text),
+        candidate.score + (0.15 * template_bonus(candidate.text)),
+        candidate.confidence,
+    )
+
+
 def write_outputs(
     records: list[dict[str, object]],
     output_dir: Path,
@@ -529,12 +538,10 @@ def main() -> int:
     rows: list[dict[str, object]] = []
     for image_path in image_paths:
         candidates = extract_candidates(reader, image_path, args.allowlist)
-        filtered = [c for c in candidates if c.score >= args.min_score][: args.top_k]
+        filtered = [c for c in candidates if c.score >= args.min_score]
+        filtered = sorted(filtered, key=selection_key, reverse=True)[: args.top_k]
         if filtered:
-            best = max(
-                filtered,
-                key=lambda c: (pattern_priority(c.text), c.score, c.confidence),
-            )
+            best = filtered[0]
             row = {
                 "image": image_path.name,
                 "best_plate": best.text,
