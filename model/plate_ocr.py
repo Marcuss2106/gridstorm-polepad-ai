@@ -155,7 +155,10 @@ def normalize_text(text: str) -> str:
 def is_plate_like(text: str) -> bool:
     if len(text) < 4 or len(text) > 12:
         return False
-    if not any(ch.isdigit() for ch in text):
+    digit_count = sum(ch.isdigit() for ch in text)
+    if digit_count < 3:
+        return False
+    if "-" in text and not re.fullmatch(r"^[A-Z0-9]-[A-Z0-9]{4,6}$", text):
         return False
     alnum_ratio = sum(ch.isalnum() for ch in text) / max(1, len(text))
     return alnum_ratio >= 0.75
@@ -219,8 +222,10 @@ def candidate_forms(text: str) -> list[tuple[str, float]]:
     m = re.fullmatch(r"^([A-Z]{1,4})([A-Z0-9]{3,7})$", text)
     if m:
         prefix, suffix = m.groups()
-        normalized = prefix + letters_to_digits(suffix)
-        forms[normalized] = min(forms.get(normalized, 1.0), 0.02)
+        # Avoid converting plain words like WARNING into fake plate-looking strings.
+        if sum(ch.isdigit() for ch in suffix) >= 2:
+            normalized = prefix + letters_to_digits(suffix)
+            forms[normalized] = min(forms.get(normalized, 1.0), 0.02)
 
     # Numeric plate fallback with OCR letter confusions coerced to digits.
     if re.fullmatch(r"^[A-Z0-9]{5,8}$", text):
@@ -364,6 +369,21 @@ def extract_candidates(
     )
 
 
+def pattern_priority(text: str) -> float:
+    """Prefer known plate templates over generic OCR tokens."""
+    if re.fullmatch(r"^PD\d{5}$", text):
+        return 5.0
+    if re.fullmatch(r"^[A-Z]-\d{4}$", text):
+        return 4.0
+    if re.fullmatch(r"^\d{6}$", text):
+        return 3.0
+    if re.fullmatch(r"^\d{5}$", text):
+        return 2.0
+    if re.fullmatch(r"^[A-Z]{2,4}\d{4,6}$", text):
+        return 1.5
+    return 0.0
+
+
 def write_outputs(
     records: list[dict[str, object]],
     output_dir: Path,
@@ -431,7 +451,10 @@ def main() -> int:
         candidates = extract_candidates(reader, image_path, args.allowlist)
         filtered = [c for c in candidates if c.score >= args.min_score][: args.top_k]
         if filtered:
-            best = max(filtered, key=lambda c: (c.score, c.confidence))
+            best = max(
+                filtered,
+                key=lambda c: (pattern_priority(c.text), c.score, c.confidence),
+            )
             row = {
                 "image": image_path.name,
                 "best_plate": best.text,
