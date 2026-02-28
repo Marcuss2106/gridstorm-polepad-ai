@@ -1,0 +1,14 @@
+[project]
+name = "model"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "roboflow>=1.2.15",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.2.0",
+]

@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 5
+names: ['insulator', 'pole', 'street light', 'transformer', 'vegetation_encroachment']
+
+roboflow:
+  workspace: marcuss-workspace
+  project: utility-poles-kcumt-nt0d2
+  version: 1
+  license: CC BY 4.0
+  url: https://app.roboflow.com/marcuss-workspace/utility-poles-kcumt-nt0d2/1
