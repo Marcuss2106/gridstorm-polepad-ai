@@ -12,6 +12,8 @@ plate text from images in `model/images`.
 - Uses template-aware scoring for likely plate formats (`PD#####`, `X-####`, numeric tags).
 - Uses consensus voting across all OCR variants to rank final candidates.
 - Filters out low-digit/noise tokens to reduce non-plate words winning selection.
+- Adds contour-based ROI plate crops (rectangular/circular) before OCR to improve
+  weak full-frame reads.
 - Writes results to:
   - `model/output/plate_predictions.csv`
   - `model/output/plate_predictions.json`

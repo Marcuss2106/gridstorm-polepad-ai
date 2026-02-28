@@ -54,6 +54,7 @@ LETTER_TO_DIGIT = {
 
 DASH_PLATE_FIRST_CHAR_MAP = {
     "6": "C",
+    "3": "C",
     "G": "C",
     "0": "C",
     "O": "C",
@@ -232,6 +233,10 @@ def candidate_forms(text: str) -> list[tuple[str, float]]:
         numeric = letters_to_digits(text)
         if re.fullmatch(r"^\d{5,8}$", numeric):
             forms[numeric] = min(forms.get(numeric, 1.0), 0.04)
+            # Leading digit on embossed tags is frequently confused with 7.
+            if len(numeric) == 6 and numeric[0] in {"5", "6", "8"}:
+                leading7 = "7" + numeric[1:]
+                forms[leading7] = min(forms.get(leading7, 1.0), 0.08)
 
     return sorted(forms.items(), key=lambda item: item[1])
 
@@ -285,6 +290,74 @@ def image_variants(image_bgr: np.ndarray) -> dict[str, np.ndarray]:
     return variants
 
 
+def detect_plate_rois(image_bgr: np.ndarray, max_rois: int = 10) -> list[np.ndarray]:
+    """Find likely plate regions so OCR sees tighter crops."""
+    h, w = image_bgr.shape[:2]
+    img_area = h * w
+    gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    edges = cv2.Canny(blur, 60, 180)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    edges = cv2.dilate(edges, kernel, iterations=1)
+    contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
+    candidates: list[tuple[float, tuple[int, int, int, int]]] = []
+    for contour in contours:
+        x, y, bw, bh = cv2.boundingRect(contour)
+        if bw < 40 or bh < 20:
+            continue
+        area = bw * bh
+        area_ratio = area / img_area
+        if area_ratio < 0.01 or area_ratio > 0.75:
+            continue
+        aspect = bw / max(1, bh)
+        rect_like = 1.4 <= aspect <= 9.5
+        round_like = 0.75 <= aspect <= 1.35 and area_ratio >= 0.02
+        if not (rect_like or round_like):
+            continue
+        perimeter = cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, 0.03 * perimeter, True)
+        # Favor shape complexity close to plates/signs.
+        shape_score = 1.0
+        if 3 <= len(approx) <= 10:
+            shape_score += 0.25
+        candidates.append((area * shape_score, (x, y, bw, bh)))
+
+    candidates.sort(reverse=True, key=lambda item: item[0])
+    rois: list[np.ndarray] = []
+    seen_boxes: list[tuple[int, int, int, int]] = []
+    for _, (x, y, bw, bh) in candidates:
+        # Basic overlap suppression.
+        suppress = False
+        for ox, oy, ow, oh in seen_boxes:
+            ix1, iy1 = max(x, ox), max(y, oy)
+            ix2, iy2 = min(x + bw, ox + ow), min(y + bh, oy + oh)
+            iw, ih = max(0, ix2 - ix1), max(0, iy2 - iy1)
+            inter = iw * ih
+            union = (bw * bh) + (ow * oh) - inter
+            iou = inter / union if union > 0 else 0.0
+            if iou > 0.65:
+                suppress = True
+                break
+        if suppress:
+            continue
+
+        pad_x = int(0.08 * bw)
+        pad_y = int(0.12 * bh)
+        x1 = max(0, x - pad_x)
+        y1 = max(0, y - pad_y)
+        x2 = min(w, x + bw + pad_x)
+        y2 = min(h, y + bh + pad_y)
+        roi = image_bgr[y1:y2, x1:x2]
+        if roi.size == 0:
+            continue
+        rois.append(roi)
+        seen_boxes.append((x, y, bw, bh))
+        if len(rois) >= max_rois:
+            break
+    return rois
+
+
 def extract_candidates(
     reader: easyocr.Reader,
     image_path: Path,
@@ -294,57 +367,64 @@ def extract_candidates(
     if image is None:
         return []
 
-    variants = image_variants(image)
+    region_images: list[tuple[str, np.ndarray]] = [("full", image)]
+    for idx, roi in enumerate(detect_plate_rois(image), start=1):
+        region_images.append((f"roi{idx}", roi))
+
     aggregates: dict[str, AggregateCandidate] = {}
-    for variant_name, variant_img in variants.items():
-        results = reader.readtext(
-            variant_img,
-            detail=1,
-            paragraph=False,
-            decoder="beamsearch",
-            beamWidth=5,
-            allowlist=allowlist,
-            min_size=8,
-            text_threshold=0.55,
-            low_text=0.30,
-            link_threshold=0.30,
-            canvas_size=2560,
-            mag_ratio=1.5,
-        )
-        for bbox, raw_text, confidence in results:
-            raw_normalized = normalize_text(raw_text)
-            if not raw_normalized:
-                continue
-            for text, penalty in candidate_forms(raw_normalized):
-                if not is_plate_like(text):
+    for region_name, region_image in region_images:
+        variants = image_variants(region_image)
+        for variant_name, variant_img in variants.items():
+            results = reader.readtext(
+                variant_img,
+                detail=1,
+                paragraph=False,
+                decoder="beamsearch",
+                beamWidth=5,
+                allowlist=allowlist,
+                min_size=8,
+                text_threshold=0.55,
+                low_text=0.30,
+                link_threshold=0.30,
+                canvas_size=2560,
+                mag_ratio=1.5,
+            )
+            for bbox, raw_text, confidence in results:
+                raw_normalized = normalize_text(raw_text)
+                if not raw_normalized:
                     continue
-                adjusted_confidence = max(0.0, float(confidence) - penalty)
-                score = score_candidate(text, adjusted_confidence)
-                vote_weight = adjusted_confidence + (0.35 * template_bonus(text))
+                for text, penalty in candidate_forms(raw_normalized):
+                    if not is_plate_like(text):
+                        continue
+                    adjusted_confidence = max(0.0, float(confidence) - penalty)
+                    score = score_candidate(text, adjusted_confidence)
+                    vote_weight = adjusted_confidence + (0.35 * template_bonus(text))
+                    vote_weight += 0.05 if region_name != "full" else 0.0
 
-                agg = aggregates.get(text)
-                if agg is None:
-                    agg = AggregateCandidate(
-                        text=text,
-                        best_confidence=adjusted_confidence,
-                        best_score=score,
-                        best_variant=variant_name,
-                        best_bbox=[[float(x), float(y)] for x, y in bbox],
-                    )
-                    aggregates[text] = agg
+                    agg = aggregates.get(text)
+                    if agg is None:
+                        agg = AggregateCandidate(
+                            text=text,
+                            best_confidence=adjusted_confidence,
+                            best_score=score,
+                            best_variant=f"{region_name}:{variant_name}",
+                            best_bbox=[[float(x), float(y)] for x, y in bbox],
+                        )
+                        aggregates[text] = agg
 
-                agg.hit_count += 1
-                agg.confidence_sum += adjusted_confidence
-                agg.weighted_votes += vote_weight
-                agg.variants.add(variant_name)
+                    agg.hit_count += 1
+                    agg.confidence_sum += adjusted_confidence
+                    agg.weighted_votes += vote_weight
+                    agg.variants.add(f"{region_name}:{variant_name}")
 
-                if adjusted_confidence > agg.best_confidence or (
-                    adjusted_confidence == agg.best_confidence and score > agg.best_score
-                ):
-                    agg.best_confidence = adjusted_confidence
-                    agg.best_score = score
-                    agg.best_variant = variant_name
-                    agg.best_bbox = [[float(x), float(y)] for x, y in bbox]
+                    if adjusted_confidence > agg.best_confidence or (
+                        adjusted_confidence == agg.best_confidence
+                        and score > agg.best_score
+                    ):
+                        agg.best_confidence = adjusted_confidence
+                        agg.best_score = score
+                        agg.best_variant = f"{region_name}:{variant_name}"
+                        agg.best_bbox = [[float(x), float(y)] for x, y in bbox]
 
     candidates: list[Candidate] = []
     for agg in aggregates.values():
