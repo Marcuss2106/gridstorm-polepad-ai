@@ -1,0 +1,4 @@
+.venv/
+easyocr_models/
+output/
+__pycache__/
