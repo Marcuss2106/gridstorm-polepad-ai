@@ -5,3 +5,8 @@ __pycache__/
 Utility-Poles-*/
 training/runs/
 training/eval/
+pole_only/
+
+runs/
+utility-pole-training/
+trained_weights/

@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://wv8g2y0arqek"]
+
+[ext_resource type="PackedScene" uid="uid://cedxrfaiu52lj" path="res://camera/cam.tscn" id="1_hnq63"]
+[ext_resource type="Script" uid="uid://si40hdv2retx" path="res://scripts/camera_ui.gd" id="1_qqbgj"]
+[ext_resource type="Texture2D" uid="uid://cafw3wjop25mf" path="res://assets/camicon.png" id="2_qqbgj"]
+
+[node name="CameraUi" type="Control" unique_id=2036629600 node_paths=PackedStringArray("textlabel", "subviewport")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_qqbgj")
+textlabel = NodePath("RichTextLabel")
+subviewport = NodePath("SubViewportContainer/SubViewport")
+
+[node name="ColorRect3" type="ColorRect" parent="." unique_id=269611255]
+layout_mode = 0
+offset_right = 840.0
+offset_bottom = 1456.0
+color = Color(0, 0, 0, 1)
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=2300737]
+z_index = 5
+layout_mode = 0
+offset_right = 799.0
+offset_bottom = 185.0
+color = Color(0, 0.44705883, 0.80784315, 1)
+
+[node name="ColorRect2" type="ColorRect" parent="." unique_id=2027792303]
+z_index = 5
+layout_mode = 0
+offset_top = 1258.0
+offset_right = 799.0
+offset_bottom = 1443.0
+color = Color(0, 0.44705883, 0.80784315, 1)
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="." unique_id=510152363]
+z_index = 1
+layout_mode = 0
+offset_left = 7.0
+offset_top = 84.0
+offset_right = 612.0
+offset_bottom = 1083.0
+scale = Vector2(1.3, 1.3)
+
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer" unique_id=1526643864]
+handle_input_locally = false
+size = Vector2i(600, 1000)
+render_target_update_mode = 4
+
+[node name="Node2D" parent="SubViewportContainer/SubViewport" unique_id=653206454 instance=ExtResource("1_hnq63")]
+position = Vector2(294, 500)
+rotation = 1.5707964
+
+[node name="CameraButton" type="Button" parent="." unique_id=1289593660]
+z_index = 6
+layout_mode = 0
+offset_left = 325.0
+offset_top = 1277.0
+offset_right = 486.0
+offset_bottom = 1428.0
+icon = ExtResource("2_qqbgj")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="." unique_id=465605663]
+z_index = 6
+layout_mode = 0
+offset_left = 8.0
+offset_top = 12.0
+offset_right = 784.0
+offset_bottom = 173.0
+theme_override_font_sizes/normal_font_size = 48
+bbcode_enabled = true
+text = "[center]text"
+
+[connection signal="pressed" from="CameraButton" to="." method="_on_camera_button_pressed"]

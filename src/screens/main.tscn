@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://34b6yye70imh"]
+
+[ext_resource type="Texture2D" uid="uid://cafw3wjop25mf" path="res://assets/camicon.png" id="1_6b72x"]
+[ext_resource type="Script" uid="uid://diwc8281lqnds" path="res://scripts/scene_changer.gd" id="2_ee7ou"]
+[ext_resource type="Texture2D" uid="uid://dm4st0mlvqsff" path="res://assets/galleryicon.png" id="2_la406"]
+[ext_resource type="PackedScene" uid="uid://wv8g2y0arqek" path="res://screens/camera_ui.tscn" id="3_cbuj4"]
+[ext_resource type="Texture2D" uid="uid://de0rcqknklklo" path="res://assets/uploadarrow.png" id="3_ee7ou"]
+[ext_resource type="Texture2D" uid="uid://c70hvisf0ugmv" path="res://assets/dominionlogo.png" id="4_cbuj4"]
+[ext_resource type="PackedScene" uid="uid://dveosol5n4yvv" path="res://screens/gallery.tscn" id="5_cbuj4"]
+
+[node name="Main" type="Control" unique_id=1109264582]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect3" type="ColorRect" parent="." unique_id=477543791]
+layout_mode = 0
+offset_right = 840.0
+offset_bottom = 1456.0
+color = Color(0, 0, 0, 1)
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=187979206]
+layout_mode = 0
+offset_right = 799.0
+offset_bottom = 185.0
+color = Color(0, 0.44705883, 0.80784315, 1)
+
+[node name="ColorRect2" type="ColorRect" parent="." unique_id=699170474]
+layout_mode = 0
+offset_top = 1258.0
+offset_right = 799.0
+offset_bottom = 1443.0
+color = Color(0, 0.44705883, 0.80784315, 1)
+
+[node name="CameraButton" type="Button" parent="." unique_id=754426188 node_paths=PackedStringArray("this_root")]
+layout_mode = 0
+offset_left = 325.0
+offset_top = 1277.0
+offset_right = 486.0
+offset_bottom = 1428.0
+icon = ExtResource("1_6b72x")
+script = ExtResource("2_ee7ou")
+to_scene = ExtResource("3_cbuj4")
+this_root = NodePath("..")
+
+[node name="GalleryButton2" type="Button" parent="." unique_id=1349473211 node_paths=PackedStringArray("this_root")]
+layout_mode = 0
+offset_left = 82.0
+offset_top = 1276.0
+offset_right = 240.0
+offset_bottom = 1427.0
+icon = ExtResource("2_la406")
+expand_icon = true
+script = ExtResource("2_ee7ou")
+to_scene = ExtResource("5_cbuj4")
+this_root = NodePath("..")
+
+[node name="UploadButton2" type="Button" parent="." unique_id=2066515349]
+layout_mode = 0
+offset_left = 560.0
+offset_top = 1277.0
+offset_right = 709.0
+offset_bottom = 1427.0
+icon = ExtResource("3_ee7ou")
+expand_icon = true
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=834293579]
+layout_mode = 0
+offset_left = 618.0
+offset_top = 2.0
+offset_right = 791.0
+offset_bottom = 174.0
+texture = ExtResource("4_cbuj4")
+expand_mode = 1
