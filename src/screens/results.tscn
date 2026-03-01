@@ -1,0 +1,115 @@
+[gd_scene format=3 uid="uid://results_scene_001"]
+
+[ext_resource type="Script" path="res://scripts/results.gd" id="1_results"]
+
+[node name="Results" type="Control" node_paths=PackedStringArray("annotated_image_rect", "pole_id_label", "pole_type_label", "components_label", "encroachment_label", "severity_label")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_results")
+annotated_image_rect = NodePath("AnnotatedImage")
+pole_id_label = NodePath("InfoPanel/PoleIdLabel")
+pole_type_label = NodePath("InfoPanel/PoleTypeLabel")
+components_label = NodePath("InfoPanel/ComponentsLabel")
+encroachment_label = NodePath("InfoPanel/EncroachmentLabel")
+severity_label = NodePath("InfoPanel/SeverityLabel")
+
+[node name="BgRect" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 840.0
+offset_bottom = 1456.0
+color = Color(0.15, 0.15, 0.15, 1)
+
+[node name="HeaderBar" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 800.0
+offset_bottom = 90.0
+color = Color(0, 0.44705883, 0.80784315, 1)
+
+[node name="HeaderLabel" type="RichTextLabel" parent="."]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 8.0
+offset_right = 784.0
+offset_bottom = 84.0
+theme_override_font_sizes/normal_font_size = 40
+bbcode_enabled = true
+text = "[center][b]AI Analysis Results[/b][/center]"
+
+[node name="AnnotatedImage" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 100.0
+offset_right = 792.0
+offset_bottom = 680.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoPanel" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 694.0
+offset_right = 780.0
+offset_bottom = 1320.0
+theme_override_constants/separation = 24
+
+[node name="PoleIdLabel" type="RichTextLabel" parent="InfoPanel"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 60)
+theme_override_font_sizes/normal_font_size = 36
+bbcode_enabled = true
+fit_content = true
+text = "[b]Pole ID:[/b]  —"
+
+[node name="PoleTypeLabel" type="RichTextLabel" parent="InfoPanel"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 60)
+theme_override_font_sizes/normal_font_size = 36
+bbcode_enabled = true
+fit_content = true
+text = "[b]Pole Type:[/b]  —"
+
+[node name="ComponentsLabel" type="RichTextLabel" parent="InfoPanel"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 60)
+theme_override_font_sizes/normal_font_size = 36
+bbcode_enabled = true
+fit_content = true
+text = "[b]Components:[/b]  —"
+
+[node name="EncroachmentLabel" type="RichTextLabel" parent="InfoPanel"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 70)
+theme_override_font_sizes/normal_font_size = 38
+bbcode_enabled = true
+fit_content = true
+text = "—"
+
+[node name="SeverityLabel" type="RichTextLabel" parent="InfoPanel"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 60)
+theme_override_font_sizes/normal_font_size = 36
+bbcode_enabled = true
+fit_content = true
+text = "[b]Vegetation:[/b]  —"
+
+[node name="FooterBar" type="ColorRect" parent="."]
+layout_mode = 0
+offset_top = 1340.0
+offset_right = 800.0
+offset_bottom = 1440.0
+color = Color(0, 0.44705883, 0.80784315, 1)
+
+[node name="EditButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 1355.0
+offset_right = 600.0
+offset_bottom = 1430.0
+theme_override_font_sizes/font_size = 40
+text = "Edit & Submit"
+
+[connection signal="pressed" from="EditButton" to="." method="_on_edit_button_pressed"]
