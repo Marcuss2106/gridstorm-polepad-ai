@@ -85,6 +85,11 @@ func _on_request_completed(
 	for comp in data.get("detected_components", []):
 		pd.ai_components.append(str(comp))
 
+	# Per-field confidence scores (keyed by field name, values 0.0 – 1.0)
+	var raw_conf = data.get("confidences", {})
+	if raw_conf is Dictionary:
+		pd.confidences = raw_conf
+
 	# Decode annotated image
 	var b64 : String = data.get("annotated_image_b64", "")
 	if b64 != "":

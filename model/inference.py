@@ -360,10 +360,11 @@ def _ocr_variants(image_bgr: np.ndarray) -> dict[str, np.ndarray]:
 # Public API
 # ---------------------------------------------------------------------------
 
-def run_ocr(png_bytes: bytes) -> str:
+def run_ocr(png_bytes: bytes) -> tuple[str, float]:
     """
     Run plate OCR on the given image bytes.
-    Returns the best matching plate ID string, or empty string if not found.
+    Returns ``(plate_id, confidence)`` where confidence is the raw EasyOCR
+    score for the best candidate (0.0 if nothing plate-like was found).
     """
     _assert_loaded()
     img_bgr  = _bytes_to_bgr(png_bytes)
@@ -395,11 +396,13 @@ def run_ocr(png_bytes: bytes) -> str:
                 best_by_text[text] = (float(confidence), score)
 
     if not best_by_text:
-        return ""
+        return ("", 0.0)
 
     best_text = max(best_by_text, key=lambda t: (best_by_text[t][0], best_by_text[t][1]))
-    _conf, score = best_by_text[best_text]
-    return best_text if score >= 0.40 else ""
+    raw_conf, score = best_by_text[best_text]
+    if score >= 0.40:
+        return (best_text, round(raw_conf, 4))
+    return ("", 0.0)
 
 
 def run_encroachment(png_bytes: bytes) -> dict:
@@ -430,17 +433,45 @@ def run_encroachment(png_bytes: bytes) -> dict:
     encroachment_detected = any(p["encroachment_detected"] for p in poles)
     severity              = _encroachment_severity(poles)
 
-    pole_type = ""
+    pole_type           = ""
+    pole_type_conf      = 0.0
     if poles:
-        best_pole = max(poles, key=lambda p: p["confidence"])
-        pole_type = best_pole["class"]
+        best_pole       = max(poles, key=lambda p: p["confidence"])
+        pole_type       = best_pole["class"]
+        pole_type_conf  = round(best_pole["confidence"], 4)
 
-    detected_classes    = {d["class"] for d in all_detections}
-    detected_components = [
-        form_key
-        for model_class, form_key in COMPONENT_MAP.items()
-        if model_class in detected_classes
-    ]
+    # Per-component max confidence (0.0 when a component is absent)
+    component_conf: dict[str, float] = {form_key: 0.0 for form_key in COMPONENT_MAP.values()}
+    detected_components: list[str] = []
+    for det in all_detections:
+        form_key = COMPONENT_MAP.get(det["class"])
+        if form_key:
+            if det["confidence"] > component_conf[form_key]:
+                component_conf[form_key] = round(det["confidence"], 4)
+            if form_key not in detected_components:
+                detected_components.append(form_key)
+
+    # Vegetation severity confidence: max confidence among vegetation segments
+    veg_conf = 0.0
+    for seg in segments:
+        if seg["class"] == "vegetation" and seg["confidence"] > veg_conf:
+            veg_conf = round(seg["confidence"], 4)
+
+    # Encroachment confidence: max confidence among encroaching segments
+    enc_conf = 0.0
+    for pole in poles:
+        for enc_seg in pole.get("encroaching_segments", []):
+            if enc_seg["confidence"] > enc_conf:
+                enc_conf = round(enc_seg["confidence"], 4)
+
+    confidences: dict[str, float] = {
+        "pole_type":           pole_type_conf,
+        "transformer":         component_conf.get("transformer",  0.0),
+        "insulator":           component_conf.get("insulator",    0.0),
+        "streetlight":         component_conf.get("streetlight",  0.0),
+        "vegetation_severity": veg_conf,
+        "encroachment":        enc_conf,
+    }
 
     annotated     = _annotate_combined(img_bgr, all_detections, segments, poles)
     _, jpeg_buf   = cv2.imencode(".jpg", annotated, [cv2.IMWRITE_JPEG_QUALITY, 85])
@@ -453,6 +484,7 @@ def run_encroachment(png_bytes: bytes) -> dict:
         "detected_components": detected_components,
         "vegetation_severity": severity,
         "encroachment":        encroachment_detected,
+        "confidences":         confidences,
         "poles":               poles,
         "all_detections":      all_detections,
         "segments":            segs_out,

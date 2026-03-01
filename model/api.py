@@ -75,6 +75,16 @@ class AnalyzeResponse(BaseModel):
     vegetation_severity: int
     encroachment:        bool
     annotated_image_b64: str
+    confidences:         dict[str, float]
+
+
+class SubmitRequest(BaseModel):
+    """Corrected field values submitted by the reviewer after AI pre-fill."""
+    pole_id:             str
+    pole_type:           str
+    detected_components: list[str]
+    vegetation_severity: int
+    encroachment:        bool
 
 
 # ---------------------------------------------------------------------------
@@ -106,8 +116,8 @@ def analyze(body: AnalyzeRequest) -> AnalyzeResponse:
 
     # OCR pass on the plate image
     try:
-        pole_id = run_ocr(plate_bytes)
-        logger.info("OCR result: %r", pole_id)
+        pole_id, pole_id_conf = run_ocr(plate_bytes)
+        logger.info("OCR result: %r (conf=%.4f)", pole_id, pole_id_conf)
     except Exception as exc:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"OCR error: {exc}") from exc
@@ -125,6 +135,11 @@ def analyze(body: AnalyzeRequest) -> AnalyzeResponse:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Detection error: {exc}") from exc
 
+    confidences: dict[str, float] = {
+        "pole_id": pole_id_conf,
+        **enc_result["confidences"],
+    }
+
     return AnalyzeResponse(
         pole_id=pole_id,
         pole_type=enc_result["pole_type"],
@@ -132,4 +147,15 @@ def analyze(body: AnalyzeRequest) -> AnalyzeResponse:
         vegetation_severity=enc_result["vegetation_severity"],
         encroachment=enc_result["encroachment"],
         annotated_image_b64=enc_result["annotated_image_b64"],
+        confidences=confidences,
     )
+
+
+@app.post("/submit")
+def submit(body: SubmitRequest) -> dict:
+    """
+    Accept reviewer-corrected pole data after AI pre-fill.
+    Logs the submission; extend this to persist to a database as needed.
+    """
+    logger.info("Reviewer submission: %s", body.model_dump())
+    return {"status": "ok", "message": "Submission recorded"}
