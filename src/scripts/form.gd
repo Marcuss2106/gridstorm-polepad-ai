@@ -61,7 +61,7 @@ func _ready() -> void:
 	_update_submit_label()
 
 func save_data():
-	ResourceSaver.save(_pole_data, "data/pole_"+_pole_data.poleID+".res")
+	ResourceSaver.save(_pole_data, "user://data/pole_"+_pole_data.poleID+".res")
 
 
 # ── Photo preview row ─────────────────────────────────────────────────────────

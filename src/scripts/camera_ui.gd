@@ -27,12 +27,12 @@ func _on_camera_button_pressed() -> void:
 
 	if pic_count == 1:
 		first_pic = img
-		img.save_jpg("res://tempdata/plate.jpg")
+		img.save_jpg("user://tempdata/plate.jpg")
 		textlabel.text = "[center]Now take a picture of the whole pole."
 
 	elif pic_count == 2:
 		second_pic = img
-		img.save_jpg("res://tempdata/pole.jpg")
+		img.save_jpg("user://tempdata/pole.jpg")
 		GlobalData.pole_data = PoleData.create_from_pics([first_pic, second_pic])
 		_send_to_api(first_pic, second_pic)
 
