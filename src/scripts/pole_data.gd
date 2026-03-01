@@ -13,6 +13,11 @@ extends Resource
 @export var ai_encroachment : bool
 @export var ai_annotated_image : Image
 
+# Per-field confidence scores returned by the backend (0.0 – 1.0).
+# Keys: "pole_id", "pole_type", "transformer", "insulator",
+#       "streetlight", "vegetation_severity", "encroachment"
+@export var confidences : Dictionary
+
 static func create_empty_pole() -> PoleData:
 	var p = PoleData.new()
 	p.poleID = ""
@@ -27,6 +32,7 @@ static func create_empty_pole() -> PoleData:
 	p.ai_components = empty_ai_components
 	p.ai_encroachment = false
 	p.ai_annotated_image = null
+	p.confidences = {}
 	return p
 
 static func create_from_pics(pics:Array[Image]) -> PoleData:
