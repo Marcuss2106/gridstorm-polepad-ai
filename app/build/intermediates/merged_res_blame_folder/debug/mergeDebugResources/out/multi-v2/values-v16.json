@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.dominionenergy.polepadai.app-mergeDebugResources-48:/values-v16/values-v16.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\ggbur\\.gradle\\caches\\8.13\\transforms\\e5d1b3bc36003e745f654767375a0554\\transformed\\appcompat-1.6.1\\res\\values-v16\\values-v16.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "5",
+                        "endColumns": "12",
+                        "endOffsets": "223"
+                    }
+                }
+            ]
+        }
+    ]
+}

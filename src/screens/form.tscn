@@ -2,6 +2,46 @@
 
 [ext_resource type="Script" uid="uid://b6j26y6j3e4i2" path="res://scripts/form.gd" id="1_1q7db"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1q7db"]
+resource_local_to_scene = true
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+shadow_size = 3
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1i71m"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+
+[sub_resource type="FontFile" id="FontFile_j5m08"]
+cache/0/variation_coordinates = {}
+cache/0/face_index = 0
+cache/0/embolden = 0.0
+cache/0/transform = Transform2D(1, 0, 0, 1, 0, 0)
+cache/0/spacing_top = 0
+cache/0/spacing_bottom = 0
+cache/0/spacing_space = 0
+cache/0/spacing_glyph = 0
+cache/0/baseline_offset = 0.0
+cache/0/16/0/ascent = 0.0
+cache/0/16/0/descent = 0.0
+cache/0/16/0/underline_position = 0.0
+cache/0/16/0/underline_thickness = 0.0
+cache/0/16/0/scale = 1.0
+cache/0/24/0/ascent = 0.0
+cache/0/24/0/descent = 0.0
+cache/0/24/0/underline_position = 0.0
+cache/0/24/0/underline_thickness = 0.0
+cache/0/24/0/scale = 1.0
+
 [node name="Form" type="Control" unique_id=1127958175 node_paths=PackedStringArray("texture_rects", "id_text", "type_text", "transformer_box", "insulator_box", "streetlight_box", "vegetation_options")]
 layout_mode = 3
 anchors_preset = 15
@@ -24,12 +64,17 @@ offset_right = 840.0
 offset_bottom = 1456.0
 color = Color(0.29781067, 0.29781067, 0.29781064, 1)
 
+[node name="White Background" type="ColorRect" parent="." unique_id=6103789]
+layout_mode = 0
+offset_right = 789.0
+offset_bottom = 1435.0
+
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1240094778]
 layout_mode = 0
 offset_left = 12.0
 offset_top = 21.0
-offset_right = 394.0
-offset_bottom = 616.0
+offset_right = 732.0
+offset_bottom = 741.0
 scale = Vector2(0.5, 0.5)
 stretch_mode = 2
 
@@ -37,18 +82,27 @@ stretch_mode = 2
 layout_mode = 0
 offset_left = 407.0
 offset_top = 18.0
-offset_right = 789.0
-offset_bottom = 613.0
+offset_right = 1127.0
+offset_bottom = 738.0
 scale = Vector2(0.5, 0.5)
 stretch_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1169089997]
+layout_mode = 0
+offset_top = 604.0
+offset_right = 793.0
+offset_bottom = 1444.0
+color = Color(0, 0.44705883, 0.80784315, 1)
 
 [node name="IdText" type="TextEdit" parent="." unique_id=385746486]
 layout_mode = 0
 offset_left = 16.0
 offset_top = 627.0
-offset_right = 779.0
+offset_right = 774.0
 offset_bottom = 729.0
+theme_override_colors/background_color = Color(0, 0, 0, 0)
 theme_override_font_sizes/font_size = 48
+theme_override_styles/normal = SubResource("StyleBoxFlat_1q7db")
 placeholder_text = "Pole ID"
 
 [node name="TypeText" type="TextEdit" parent="." unique_id=464118925]
@@ -57,35 +111,38 @@ offset_left = 16.0
 offset_top = 750.0
 offset_right = 779.0
 offset_bottom = 852.0
+theme_override_colors/background_color = Color(1, 1, 0.9137255, 0)
 theme_override_font_sizes/font_size = 48
+theme_override_styles/normal = SubResource("StyleBoxFlat_1i71m")
 placeholder_text = "Pole Type"
 
 [node name="TransformerBox" type="CheckBox" parent="." unique_id=1305103859]
 layout_mode = 0
-offset_left = 27.0
-offset_top = 915.0
-offset_right = 201.0
-offset_bottom = 957.0
+offset_left = 17.0
+offset_top = 911.0
+offset_right = 191.0
+offset_bottom = 953.0
 scale = Vector2(2, 2)
+theme_override_fonts/font = SubResource("FontFile_j5m08")
 theme_override_font_sizes/font_size = 24
 text = "Transformer"
 
 [node name="InsulatorBox" type="CheckBox" parent="." unique_id=86136031]
 layout_mode = 0
-offset_left = 27.0
-offset_top = 1001.0
-offset_right = 201.0
-offset_bottom = 1043.0
+offset_left = 17.0
+offset_top = 994.0
+offset_right = 191.0
+offset_bottom = 1036.0
 scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 24
 text = "Insulator"
 
 [node name="StreetlightBox" type="CheckBox" parent="." unique_id=1264770625]
 layout_mode = 0
-offset_left = 28.0
-offset_top = 1087.0
-offset_right = 202.0
-offset_bottom = 1129.0
+offset_left = 15.0
+offset_top = 1083.0
+offset_right = 189.0
+offset_bottom = 1125.0
 scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 24
 text = "Streetlight"

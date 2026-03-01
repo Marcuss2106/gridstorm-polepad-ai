@@ -24,8 +24,8 @@ color = Color(0, 0, 0, 1)
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=187979206]
 layout_mode = 0
-offset_right = 799.0
-offset_bottom = 185.0
+offset_right = 839.0
+offset_bottom = 203.0
 color = Color(0, 0.44705883, 0.80784315, 1)
 
 [node name="ColorRect2" type="ColorRect" parent="." unique_id=699170474]
@@ -69,9 +69,9 @@ expand_icon = true
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=834293579]
 layout_mode = 0
-offset_left = 618.0
-offset_top = 2.0
-offset_right = 791.0
-offset_bottom = 174.0
+offset_left = 661.0
+offset_top = 16.0
+offset_right = 834.0
+offset_bottom = 188.0
 texture = ExtResource("4_cbuj4")
 expand_mode = 1
