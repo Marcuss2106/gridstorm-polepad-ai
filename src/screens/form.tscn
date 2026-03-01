@@ -120,22 +120,20 @@ placeholder_text = "Pole Type"
 layout_mode = 0
 offset_left = 17.0
 offset_top = 911.0
-offset_right = 191.0
+offset_right = 41.0
 offset_bottom = 953.0
 scale = Vector2(2, 2)
 theme_override_fonts/font = SubResource("FontFile_j5m08")
 theme_override_font_sizes/font_size = 24
-text = "Transformer"
 
 [node name="InsulatorBox" type="CheckBox" parent="." unique_id=86136031]
 layout_mode = 0
 offset_left = 17.0
 offset_top = 994.0
-offset_right = 191.0
+offset_right = 41.0
 offset_bottom = 1036.0
 scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 24
-text = "Insulator"
 
 [node name="StreetlightBox" type="CheckBox" parent="." unique_id=1264770625]
 layout_mode = 0
@@ -145,14 +143,13 @@ offset_right = 189.0
 offset_bottom = 1125.0
 scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 24
-text = "Streetlight"
 
 [node name="VegetationOptions" type="OptionButton" parent="." unique_id=811320383]
 layout_mode = 0
-offset_left = 34.0
-offset_top = 1239.0
-offset_right = 183.5
-offset_bottom = 1281.0
+offset_left = 21.0
+offset_top = 1226.0
+offset_right = 170.5
+offset_bottom = 1268.0
 scale = Vector2(2, 2)
 item_count = 3
 popup/item_0/text = "None"
@@ -182,11 +179,38 @@ text = "Vegetation"
 
 [node name="Button" type="Button" parent="." unique_id=1247867054]
 layout_mode = 0
-offset_left = 286.0
+offset_left = 278.0
 offset_top = 1345.0
-offset_right = 505.0
-offset_bottom = 1420.0
+offset_right = 530.0
+offset_bottom = 1436.0
 theme_override_font_sizes/font_size = 48
 text = "Submit"
+
+[node name="RichTextLabel3" type="RichTextLabel" parent="." unique_id=12865332]
+layout_mode = 0
+offset_left = 66.0
+offset_top = 929.0
+offset_right = 311.0
+offset_bottom = 979.0
+theme_override_font_sizes/normal_font_size = 32
+text = "Transformer"
+
+[node name="RichTextLabel4" type="RichTextLabel" parent="." unique_id=1423494206]
+layout_mode = 0
+offset_left = 69.0
+offset_top = 1013.0
+offset_right = 314.0
+offset_bottom = 1063.0
+theme_override_font_sizes/normal_font_size = 32
+text = "Insulator"
+
+[node name="RichTextLabel5" type="RichTextLabel" parent="." unique_id=1908818716]
+layout_mode = 0
+offset_left = 69.0
+offset_top = 1100.0
+offset_right = 314.0
+offset_bottom = 1150.0
+theme_override_font_sizes/normal_font_size = 32
+text = "Streetlight"
 
 [connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
