@@ -31,7 +31,7 @@ func update_ui():
 
 func update_data():
 	pole_data.poleID = id_text.text
-	pole_data.poleType = pole_data.poleType
+	pole_data.poleType = type_text.text
 	pole_data.surroundings = []
 	if transformer_box.button_pressed:
 		pole_data.surroundings.append("transformer")
