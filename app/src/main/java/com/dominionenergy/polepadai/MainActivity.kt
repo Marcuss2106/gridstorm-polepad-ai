@@ -1,5 +1,6 @@
 package com.dominionenergy.polepadai
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,6 +20,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -30,9 +33,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.dominionenergy.polepadai.ui.CameraUI
-import com.dominionenergy.polepadai.ui.FormVerification
 import com.dominionenergy.polepadai.ui.Info
 import com.dominionenergy.polepadai.ui.ScanGallery
+import com.dominionenergy.polepadai.ui.FormVerification
 import com.dominionenergy.polepadai.ui.Upload
 import com.dominionenergy.polepadai.ui.theme.DominionBlue
 import com.dominionenergy.polepadai.ui.theme.DominionEnergyPolepadAITheme
@@ -47,7 +50,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             DominionEnergyPolepadAITheme {
                 val navController = rememberNavController() //let's us start to navigate
-
+                //val capturedImage = remember { mutableStateOf<Bitmap?>(null)} // hold the information about the camera?
                 NavHost(
                     navController = navController,
                     startDestination = "home"
@@ -59,7 +62,7 @@ class MainActivity : ComponentActivity() {
                     composable("gallery") { ScanGallery() } // go to the gallery
                     composable("upload") { Upload() } // go to the uploaf screen
                     composable("info") { Info() } //go to info
-                    composable("form") { FormVerification() } // go to form verification screen
+                    composable("form") { FormVerificationScreenUI() } // go to form verification screen
                 }
             }
         }
@@ -101,7 +104,9 @@ fun HomeScreen(navController: NavController) { // home screen composable + UI + 
                         contentDescription = "Logo",
                         modifier = Modifier
                             .size(100.dp)
-                            // we aren't clicking a logo
+                            .clickable {
+                                navController.navigate("form")
+                            }
                     )
                 }
             }
@@ -169,7 +174,7 @@ fun HomeScreen(navController: NavController) { // home screen composable + UI + 
                 .fillMaxSize(),
                 contentAlignment = Alignment.Center
         ) {
-            Text("This the the home screen! Fun Info goes here", fontSize = 20.sp)
+            Text("Let's get snapping!", fontSize = 20.sp)
         }
     }
 }
