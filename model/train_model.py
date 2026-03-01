@@ -9,6 +9,12 @@ detect_model = YOLO("yolo26m.pt")
 # Segmentation model — vegetation + guy_guard only (polygon masks)
 seg_model = YOLO("yolo26m-seg.pt")
 
+
+rf = Roboflow(api_key="038INb0Av0p6eo4CVxxx")
+project = rf.workspace("marcuss-workspace").project("utility-poles-kcumt-nt0d2")
+version = project.version(5)
+dataset = version.download("yolo26")
+
 # --- SEGMENTATION DATASET DOWNLOAD ---
 # Downloads the same project in yolov11 polygon format into a separate directory
 # so the bbox labels in Utility-Poles-4/ are not overwritten.
