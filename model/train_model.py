@@ -1,13 +1,13 @@
-from ultralytics import YOLO
+# from ultralytics import YOLO
 from roboflow import Roboflow
 import shutil
 from pathlib import Path
 
-# Detection model — all 7 pole component classes (bounding boxes)
-detect_model = YOLO("yolo26m.pt")
+# # Detection model — all 7 pole component classes (bounding boxes)
+# detect_model = YOLO("yolo26m.pt")
 
-# Segmentation model — vegetation + guy_guard only (polygon masks)
-seg_model = YOLO("yolo26m-seg.pt")
+# # Segmentation model — vegetation + guy_guard only (polygon masks)
+# seg_model = YOLO("yolo26m-seg.pt")
 
 
 rf = Roboflow(api_key="038INb0Av0p6eo4CVxxx")
@@ -26,24 +26,24 @@ project = rf.workspace("marcuss-workspace").project("utility-poles-kcumt-nt0d2")
 version = project.version(5)
 seg_dataset = version.download("yolov11", location="Utility-Poles-5-seg")  # polygon format — compatible with YOLO26-seg
 
-# --- DETECTION MODEL ---
-# Trains on all 7 classes: composite, guy_guard, insulator, street light,
-# transformer, vegetation, wood — outputs bounding boxes.
-detect_results = detect_model.train(
-    data="Utility-Poles-5/data.yaml",
-    epochs=100,
-    imgsz=720,
-    batch=16,
-    device=[0, 1, 2, 3],          # set to "cpu" if no GPU
-    optimizer="auto",  # uses MuSGD (YOLO26's new optimizer)
-    lr0=0.001,
-    patience=20,
-    pretrained=True,
-    cache=True,
-    project="utility-pole-training",
-    name="yolo26m-detect",
-    save_period=10,
-)
+# # --- DETECTION MODEL ---
+# # Trains on all 7 classes: composite, guy_guard, insulator, street light,
+# # transformer, vegetation, wood — outputs bounding boxes.
+# detect_results = detect_model.train(
+#     data="Utility-Poles-5/data.yaml",
+#     epochs=100,
+#     imgsz=720,
+#     batch=16,
+#     device=[0, 1, 2, 3],          # set to "cpu" if no GPU
+#     optimizer="auto",  # uses MuSGD (YOLO26's new optimizer)
+#     lr0=0.001,
+#     patience=20,
+#     pretrained=True,
+#     cache=True,
+#     project="utility-pole-training",
+#     name="yolo26m-detect",
+#     save_period=10,
+# )
 
 # --- FILTER TO 2-CLASS SEGMENTATION DATASET ---
 # Keeps only guy_guard (class 1) and vegetation (class 5) from the full 7-class
@@ -91,26 +91,26 @@ print(f"2-class seg dataset written to: {dst_root.resolve()}")
 
 # --- SEGMENTATION MODEL ---
 # Trains on 2 classes only: guy_guard + vegetation — outputs polygon masks.
-seg_results = seg_model.train(
-    data="Utility-Poles-5-seg-2cls/data.yaml",
-    epochs=100,
-    imgsz=720,
-    batch=16,
-    device=[0, 1, 2, 3],          # set to "cpu" if no GPU
-    optimizer="auto",
-    lr0=0.001,
-    patience=20,
-    pretrained=True,
-    cache=True,
-    project="utility-pole-training",
-    name="yolo26m-seg-veg-guy",
-    save_period=10,
-)
+# seg_results = seg_model.train(
+#     data="Utility-Poles-5-seg-2cls/data.yaml",
+#     epochs=100,
+#     imgsz=720,
+#     batch=16,
+#     device=[0, 1, 2, 3],          # set to "cpu" if no GPU
+#     optimizer="auto",
+#     lr0=0.001,
+#     patience=20,
+#     pretrained=True,
+#     cache=True,
+#     project="utility-pole-training",
+#     name="yolo26m-seg-veg-guy",
+#     save_period=10,
+# )
 
-# --- EXPORT BOTH MODELS FOR MOBILE ---
-best_detect = YOLO("utility-pole-training/yolo26m-detect/weights/best.pt")
-best_seg = YOLO("utility-pole-training/yolo26m-seg-veg-guy/weights/best.pt")
+# # --- EXPORT BOTH MODELS FOR MOBILE ---
+# best_detect = YOLO("utility-pole-training/yolo26m-detect/weights/best.pt")
+# best_seg = YOLO("utility-pole-training/yolo26m-seg-veg-guy/weights/best.pt")
 
-# Android (TFLite)
-best_detect.export(format="tflite")
-best_seg.export(format="tflite")
+# # Android (TFLite)
+# best_detect.export(format="tflite")
+# best_seg.export(format="tflite")
