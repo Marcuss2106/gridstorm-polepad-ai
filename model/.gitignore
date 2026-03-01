@@ -3,3 +3,5 @@ easyocr_models/
 output/
 __pycache__/
 Utility-Poles-*/
+training/runs/
+training/eval/
