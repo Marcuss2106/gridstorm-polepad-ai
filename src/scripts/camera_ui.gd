@@ -16,6 +16,10 @@ var _http      : HTTPRequest
 
 func _ready() -> void:
 	textlabel.text = "[center]Please take a picture of just the pole's tag (plate)."
+	_http = HTTPRequest.new()
+	add_child(_http)
+	_http.request_completed.connect(_on_request_completed)
+
 
 func _on_camera_button_pressed() -> void:
 	var img = subviewport.get_texture().get_image()
@@ -37,9 +41,9 @@ func _send_to_api(plate_img: Image, pole_img: Image) -> void:
 	textlabel.text = "[center]Analyzing... please wait."
 	_set_button_enabled(false)
 
-	# Encode both images as PNG bytes then base64
-	var plate_b64 : String = Marshalls.raw_to_base64(plate_img.save_png_to_buffer())
-	var pole_b64  : String = Marshalls.raw_to_base64(pole_img.save_png_to_buffer())
+	# Encode both images as JPEG bytes then base64
+	var plate_b64 : String = Marshalls.raw_to_base64(plate_img.save_jpg_to_buffer(0.9))
+	var pole_b64  : String = Marshalls.raw_to_base64(pole_img.save_jpg_to_buffer(0.9))
 
 	var body    : String            = JSON.stringify({"plate_image_b64": plate_b64, "pole_image_b64": pole_b64})
 	var headers : PackedStringArray = ["Content-Type: application/json"]

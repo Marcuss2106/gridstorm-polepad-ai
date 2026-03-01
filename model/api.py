@@ -60,7 +60,7 @@ app.add_middleware(
 
 class AnalyzeRequest(BaseModel):
     """
-    Both images must be base64-encoded PNG or JPEG bytes.
+    Both images must be base64-encoded PNG or JPEG bytes (720x720 recommended).
     plate_image_b64: close-up of the pole tag/plate (used for OCR)
     pole_image_b64:  full-pole shot (used for YOLO detection + segmentation)
     """

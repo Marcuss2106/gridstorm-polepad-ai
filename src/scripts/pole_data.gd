@@ -21,7 +21,7 @@ static func create_empty_pole() -> PoleData:
 	p.poleType = ""
 	var emptystrings : Array[String] = []
 	p.surroundings = emptystrings
-	p.vegetation = -1
+	p.vegetation = 0
 	p.ai_pole_type = ""
 	var empty_ai_components : Array[String] = []
 	p.ai_components = empty_ai_components
