@@ -15,23 +15,20 @@ var _http      : HTTPRequest
 
 
 func _ready() -> void:
-	textlabel.text = "[center]Please take a picture of just the pole's tag."
-	_http = HTTPRequest.new()
-	add_child(_http)
-	_http.request_completed.connect(_on_request_completed)
-
+	textlabel.text = "[center]Please take a picture of just the pole's tag (plate)."
 
 func _on_camera_button_pressed() -> void:
-	var img : Image = subviewport.get_texture().get_image()
-	img.save_png("res://data/temp.png")
+	var img = subviewport.get_texture().get_image()
 	pic_count += 1
 
 	if pic_count == 1:
 		first_pic = img
+		img.save_jpg("res://tempdata/plate.jpg")
 		textlabel.text = "[center]Now take a picture of the whole pole."
 
 	elif pic_count == 2:
 		second_pic = img
+		img.save_jpg("res://tempdata/pole.jpg")
 		GlobalData.pole_data = PoleData.create_from_pics([first_pic, second_pic])
 		_send_to_api(first_pic, second_pic)
 
