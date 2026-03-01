@@ -32,7 +32,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.dominionenergy.polepadai.ui.CameraUI
+import com.dominionenergy.polepadai.ui.CameraScreen
 import com.dominionenergy.polepadai.ui.Info
 import com.dominionenergy.polepadai.ui.ScanGallery
 import com.dominionenergy.polepadai.ui.FormVerification
@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
                     composable("home") {
                         HomeScreen(navController)
                     }
-                    composable("camera") { CameraUI() } // go to camera
+                    composable("camera") { CameraScreen() } // go to camera
                     composable("gallery") { ScanGallery() } // go to the gallery
                     composable("upload") { Upload() } // go to the uploaf screen
                     composable("info") { Info() } //go to info
