@@ -5,12 +5,13 @@ extends Control
 @export var texture_rect : TextureRect
 @export var text_label : RichTextLabel
 
-func _init(pole_data) -> void:
-	self.pole_data = pole_data
+const DATA_DIR = "res://data/"
+const FORM_SCENE = preload("uid://y33a508r54up")
 
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	if pole_data:
+
+func _process(delta: float) -> void:
+	if texture_rect.texture == null and text_label.text != "":
+		pole_data = ResourceLoader.load(DATA_DIR + "pole_" + text_label.text + ".res")
 		update_ui()
 
 func update_ui():
@@ -21,4 +22,10 @@ func update_ui():
 
 func _on_texture_rect_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
-		print("clickkkkk")
+		GlobalData.pole_data = pole_data
+		get_tree().root.add_child(FORM_SCENE.instantiate())
+		queue_free()
+
+
+func set_pole_data(pole_data:PoleData):
+	self.pole_data = pole_data
