@@ -2,47 +2,15 @@
 
 [ext_resource type="Script" uid="uid://b6j26y6j3e4i2" path="res://scripts/form.gd" id="1_1q7db"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1q7db"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_banner"]
 resource_local_to_scene = true
-bg_color = Color(1, 1, 1, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0, 0, 0, 1)
-shadow_size = 3
-anti_aliasing = false
+bg_color = Color(0.85, 0.55, 0.05, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1i71m"]
-bg_color = Color(1, 1, 1, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0, 0, 0, 1)
-
-[sub_resource type="FontFile" id="FontFile_j5m08"]
-cache/0/variation_coordinates = {}
-cache/0/face_index = 0
-cache/0/embolden = 0.0
-cache/0/transform = Transform2D(1, 0, 0, 1, 0, 0)
-cache/0/spacing_top = 0
-cache/0/spacing_bottom = 0
-cache/0/spacing_space = 0
-cache/0/spacing_glyph = 0
-cache/0/baseline_offset = 0.0
-cache/0/16/0/ascent = 0.0
-cache/0/16/0/descent = 0.0
-cache/0/16/0/underline_position = 0.0
-cache/0/16/0/underline_thickness = 0.0
-cache/0/16/0/scale = 1.0
-cache/0/24/0/ascent = 0.0
-cache/0/24/0/descent = 0.0
-cache/0/24/0/underline_position = 0.0
-cache/0/24/0/underline_thickness = 0.0
-cache/0/24/0/scale = 1.0
-
-[node name="Form" type="Control" unique_id=1127958175 node_paths=PackedStringArray("texture_rects", "id_text", "type_text", "transformer_box", "insulator_box", "streetlight_box", "vegetation_options")]
+[node name="Form" type="Control" unique_id=1127958175 node_paths=PackedStringArray("banner_label", "field_vbox", "submit_btn")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -50,145 +18,79 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_1q7db")
-texture_rects = [NodePath("TextureRect"), NodePath("TextureRect2")]
-id_text = NodePath("IdText")
-type_text = NodePath("TypeText")
-transformer_box = NodePath("TransformerBox")
-insulator_box = NodePath("InsulatorBox")
-streetlight_box = NodePath("StreetlightBox")
-vegetation_options = NodePath("VegetationOptions")
+banner_label = NodePath("ReviewBanner/BannerLabel")
+field_vbox = NodePath("FieldScroll/FieldVBox")
+submit_btn = NodePath("SubmitBtn")
 
-[node name="ColorRect3" type="ColorRect" parent="." unique_id=1083375461]
+[node name="BgRect" type="ColorRect" parent="."]
 layout_mode = 0
 offset_right = 840.0
 offset_bottom = 1456.0
-color = Color(0.29781067, 0.29781067, 0.29781064, 1)
+color = Color(0.15, 0.15, 0.15, 1)
 
-[node name="White Background" type="ColorRect" parent="." unique_id=6103789]
+[node name="HeaderBar" type="ColorRect" parent="."]
 layout_mode = 0
-offset_right = 789.0
-offset_bottom = 1435.0
+offset_right = 840.0
+offset_bottom = 90.0
+color = Color(0, 0.447, 0.808, 1)
 
-[node name="TextureRect" type="TextureRect" parent="." unique_id=1240094778]
+[node name="HeaderLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 21.0
-offset_right = 732.0
-offset_bottom = 741.0
-scale = Vector2(0.5, 0.5)
-stretch_mode = 2
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 840.0
+offset_bottom = 90.0
+theme_override_font_sizes/font_size = 36
+text = "Review AI Results"
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="TextureRect2" type="TextureRect" parent="." unique_id=1227909780]
+[node name="ReviewBanner" type="Panel" parent="."]
 layout_mode = 0
-offset_left = 407.0
-offset_top = 18.0
-offset_right = 1127.0
-offset_bottom = 738.0
-scale = Vector2(0.5, 0.5)
-stretch_mode = 2
+offset_top = 90.0
+offset_right = 840.0
+offset_bottom = 175.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_banner")
+visible = false
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=1169089997]
+[node name="BannerLabel" type="Label" parent="ReviewBanner"]
 layout_mode = 0
-offset_top = 604.0
-offset_right = 793.0
-offset_bottom = 1444.0
-color = Color(0, 0.44705883, 0.80784315, 1)
+offset_left = 14.0
+offset_top = 0.0
+offset_right = 826.0
+offset_bottom = 85.0
+theme_override_font_sizes/font_size = 26
+autowrap_mode = 3
+text = "Some fields need quick review — we highlighted uncertain results."
+horizontal_alignment = 0
+vertical_alignment = 1
 
-[node name="IdText" type="TextEdit" parent="." unique_id=385746486]
+[node name="FieldScroll" type="ScrollContainer" parent="."]
 layout_mode = 0
-offset_left = 16.0
-offset_top = 627.0
-offset_right = 774.0
-offset_bottom = 729.0
-theme_override_colors/background_color = Color(0, 0, 0, 0)
-theme_override_font_sizes/font_size = 48
-theme_override_styles/normal = SubResource("StyleBoxFlat_1q7db")
-placeholder_text = "Pole ID"
+offset_top = 175.0
+offset_right = 840.0
+offset_bottom = 1350.0
 
-[node name="TypeText" type="TextEdit" parent="." unique_id=464118925]
+[node name="FieldVBox" type="VBoxContainer" parent="FieldScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(840, 0)
+theme_override_constants/separation = 10
+
+[node name="FooterBar" type="ColorRect" parent="."]
 layout_mode = 0
-offset_left = 16.0
-offset_top = 750.0
-offset_right = 779.0
-offset_bottom = 852.0
-theme_override_colors/background_color = Color(1, 1, 0.9137255, 0)
-theme_override_font_sizes/font_size = 48
-theme_override_styles/normal = SubResource("StyleBoxFlat_1i71m")
-placeholder_text = "Pole Type"
+offset_top = 1350.0
+offset_right = 840.0
+offset_bottom = 1456.0
+color = Color(0, 0.447, 0.808, 1)
 
-[node name="TransformerBox" type="CheckBox" parent="." unique_id=1305103859]
+[node name="SubmitBtn" type="Button" parent="."]
 layout_mode = 0
-offset_left = 17.0
-offset_top = 911.0
-offset_right = 191.0
-offset_bottom = 953.0
-scale = Vector2(2, 2)
-theme_override_fonts/font = SubResource("FontFile_j5m08")
-theme_override_font_sizes/font_size = 24
-text = "Transformer"
+offset_left = 100.0
+offset_top = 1365.0
+offset_right = 740.0
+offset_bottom = 1448.0
+theme_override_font_sizes/font_size = 40
+text = "Confirm All / Submit"
 
-[node name="InsulatorBox" type="CheckBox" parent="." unique_id=86136031]
-layout_mode = 0
-offset_left = 17.0
-offset_top = 994.0
-offset_right = 191.0
-offset_bottom = 1036.0
-scale = Vector2(2, 2)
-theme_override_font_sizes/font_size = 24
-text = "Insulator"
-
-[node name="StreetlightBox" type="CheckBox" parent="." unique_id=1264770625]
-layout_mode = 0
-offset_left = 15.0
-offset_top = 1083.0
-offset_right = 189.0
-offset_bottom = 1125.0
-scale = Vector2(2, 2)
-theme_override_font_sizes/font_size = 24
-text = "Streetlight"
-
-[node name="VegetationOptions" type="OptionButton" parent="." unique_id=811320383]
-layout_mode = 0
-offset_left = 34.0
-offset_top = 1239.0
-offset_right = 183.5
-offset_bottom = 1281.0
-scale = Vector2(2, 2)
-item_count = 4
-popup/item_0/text = "None"
-popup/item_0/id = 0
-popup/item_1/text = "Low"
-popup/item_1/id = 1
-popup/item_2/text = "Medium"
-popup/item_2/id = 2
-popup/item_3/text = "High"
-popup/item_3/id = 3
-
-[node name="RichTextLabel" type="RichTextLabel" parent="." unique_id=1392478215]
-layout_mode = 0
-offset_left = 31.0
-offset_top = 866.0
-offset_right = 276.0
-offset_bottom = 916.0
-theme_override_font_sizes/normal_font_size = 32
-text = "Surroundings"
-
-[node name="RichTextLabel2" type="RichTextLabel" parent="." unique_id=840428585]
-layout_mode = 0
-offset_left = 25.0
-offset_top = 1168.0
-offset_right = 270.0
-offset_bottom = 1218.0
-theme_override_font_sizes/normal_font_size = 32
-text = "Vegetation"
-
-[node name="Button" type="Button" parent="." unique_id=1247867054]
-layout_mode = 0
-offset_left = 286.0
-offset_top = 1345.0
-offset_right = 505.0
-offset_bottom = 1420.0
-theme_override_font_sizes/font_size = 48
-text = "Submit"
-
-[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
+[connection signal="pressed" from="SubmitBtn" to="." method="_on_submit_pressed"]
