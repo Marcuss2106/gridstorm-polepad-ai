@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://cxed0urgsmwwm"]
+
+[ext_resource type="Script" uid="uid://dww5x0371cg7m" path="res://scripts/gallery_thumbnail.gd" id="1_1e3hs"]
+
+[node name="GalleryThumbnail" type="Control" unique_id=291604438 node_paths=PackedStringArray("texture_rect", "text_label")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -560.0
+offset_bottom = -1140.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_1e3hs")
+texture_rect = NodePath("TextureRect")
+text_label = NodePath("RichTextLabel")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=2092729668]
+layout_mode = 0
+offset_right = 240.0
+offset_bottom = 240.0
+expand_mode = 1
+
+[node name="RichTextLabel" type="RichTextLabel" parent="." unique_id=2041164282]
+layout_mode = 0
+offset_top = 248.0
+offset_right = 240.0
+offset_bottom = 300.0
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+
+[connection signal="gui_input" from="TextureRect" to="." method="_on_texture_rect_gui_input"]

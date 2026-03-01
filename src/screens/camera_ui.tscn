@@ -17,59 +17,63 @@ subviewport = NodePath("SubViewportContainer/SubViewport")
 
 [node name="ColorRect3" type="ColorRect" parent="." unique_id=269611255]
 layout_mode = 0
-offset_right = 840.0
-offset_bottom = 1456.0
+offset_left = -17.0
+offset_top = -20.0
+offset_right = 814.0
+offset_bottom = 1470.0
 color = Color(0, 0, 0, 1)
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=2300737]
-z_index = 5
+z_index = 2
 layout_mode = 0
 offset_right = 799.0
-offset_bottom = 185.0
+offset_bottom = 230.0
 color = Color(0, 0.44705883, 0.80784315, 1)
 
 [node name="ColorRect2" type="ColorRect" parent="." unique_id=2027792303]
-z_index = 5
+z_index = 2
 layout_mode = 0
-offset_top = 1258.0
+offset_top = 1164.0
 offset_right = 799.0
 offset_bottom = 1443.0
 color = Color(0, 0.44705883, 0.80784315, 1)
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="." unique_id=510152363]
-z_index = 1
+z_index = 3
 layout_mode = 0
-offset_left = 7.0
-offset_top = 84.0
-offset_right = 612.0
-offset_bottom = 1083.0
+offset_left = -72.0
+offset_top = 229.00002
+offset_right = 648.0
+offset_bottom = 949.0
 scale = Vector2(1.3, 1.3)
 
 [node name="SubViewport" type="SubViewport" parent="SubViewportContainer" unique_id=1526643864]
 handle_input_locally = false
-size = Vector2i(600, 1000)
+size = Vector2i(720, 720)
 render_target_update_mode = 4
 
 [node name="Node2D" parent="SubViewportContainer/SubViewport" unique_id=653206454 instance=ExtResource("1_hnq63")]
-position = Vector2(294, 500)
+position = Vector2(357.69232, 340.76926)
 rotation = 1.5707964
+scale = Vector2(1.11, 1.11)
 
 [node name="CameraButton" type="Button" parent="." unique_id=1289593660]
 z_index = 6
 layout_mode = 0
-offset_left = 325.0
-offset_top = 1277.0
-offset_right = 486.0
-offset_bottom = 1428.0
+offset_left = 277.0
+offset_top = 1205.0
+offset_right = 488.0
+offset_bottom = 1409.0
 icon = ExtResource("2_qqbgj")
+icon_alignment = 1
 
 [node name="RichTextLabel" type="RichTextLabel" parent="." unique_id=465605663]
 z_index = 6
 layout_mode = 0
-offset_left = 8.0
-offset_top = 12.0
-offset_right = 784.0
-offset_bottom = 173.0
+offset_left = 9.0
+offset_top = 31.0
+offset_right = 785.0
+offset_bottom = 192.0
 theme_override_font_sizes/normal_font_size = 48
 bbcode_enabled = true
 text = "[center]text"
