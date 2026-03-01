@@ -3,7 +3,7 @@ extends Control
 # ── Set this to your dev machine's local IP before building ──────────────────
 const API_HOST    := "http://10.35.241.238"
 const API_PORT    := 8000
-const ANALYZE_URL := API_HOST + ":" + str(API_PORT) + "/analyze"
+var   ANALYZE_URL := API_HOST + ":" + str(API_PORT) + "/analyze"
 
 @export var textlabel  : RichTextLabel
 @export var subviewport: SubViewport

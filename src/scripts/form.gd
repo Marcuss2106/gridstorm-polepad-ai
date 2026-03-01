@@ -3,7 +3,7 @@ extends Control
 # ── Set to match camera_ui.gd ────────────────────────────────────────────────
 const API_HOST   := "http://10.35.241.238"
 const API_PORT   := 8000
-const SUBMIT_URL := API_HOST + ":" + str(API_PORT) + "/submit"
+var   SUBMIT_URL := API_HOST + ":" + str(API_PORT) + "/submit"
 
 # ── Wired in form.tscn ───────────────────────────────────────────────────────
 @export var banner_label : Label
@@ -60,14 +60,12 @@ func _ready() -> void:
 	_update_banner()
 	_update_submit_label()
 
-func save_data():
-	ResourceSaver.save(pole_data, "data/pole_"+pole_data.poleID+".res")
+#func save_data():
+	#ResourceSaver.save(pole_data, "data/pole_"+pole_data.poleID+".res")
 
-<<<<<<< HEAD
-func _on_button_pressed() -> void:
-	update_data()
-	save_data()
-=======
+#func _on_button_pressed() -> void:
+	#update_data()
+	#save_data()
 # ── Photo preview row ─────────────────────────────────────────────────────────
 
 func _build_photo_row() -> void:
@@ -343,7 +341,6 @@ func _on_submit_completed(
 	var main_scene = load("res://screens/main.tscn")
 	if main_scene:
 		get_tree().root.add_child(main_scene.instantiate())
->>>>>>> 43e99dd061b840ad9b1ed7f9662e94da28087b62
 	queue_free()
 
 

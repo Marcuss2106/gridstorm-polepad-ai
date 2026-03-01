@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://ncgo41lmw83f" path="res://screens/gallery.gd" id="1_gbdmn"]
 [ext_resource type="PackedScene" uid="uid://cxed0urgsmwwm" path="res://screens/gallery_thumbnail.tscn" id="2_pmmtb"]
 [ext_resource type="Texture2D" uid="uid://bmosowey6d04g" path="res://assets/backarrow.png" id="3_171e5"]
-[ext_resource type="Script" uid="uid://u0t0dnc50yu7" path="res://scripts/main_menu_button.gd" id="4_eqpjy"]
+[ext_resource type="Script" path="res://scripts/main_menu_button.gd" id="4_eqpjy"]
 
 [node name="Gallery" type="Control" unique_id=2114949479 node_paths=PackedStringArray("thumbnail_root")]
 layout_mode = 3
