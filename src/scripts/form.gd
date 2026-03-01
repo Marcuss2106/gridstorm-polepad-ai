@@ -63,9 +63,6 @@ func _ready() -> void:
 func save_data():
 	ResourceSaver.save(_pole_data, "data/pole_"+_pole_data.poleID+".res")
 
-func _on_button_pressed() -> void:
-	save_data()
-
 
 # ── Photo preview row ─────────────────────────────────────────────────────────
 
@@ -303,12 +300,15 @@ func _collect_data() -> void:
 	var enc_cb := _input_nodes.get("encroachment") as CheckBox
 	if enc_cb:
 		pd.ai_encroachment = enc_cb.button_pressed
+	
+	_pole_data = pd
 
 
 # ── Submit to server ──────────────────────────────────────────────────────────
 
 func _on_submit_pressed() -> void:
 	_collect_data()
+	save_data()
 
 	var pd := _pole_data
 	var payload := JSON.stringify({
