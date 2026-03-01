@@ -1,9 +1,50 @@
 [gd_scene format=3 uid="uid://dveosol5n4yvv"]
 
-[node name="Gallery" type="Control" unique_id=2114949479]
+[ext_resource type="Script" uid="uid://ncgo41lmw83f" path="res://screens/gallery.gd" id="1_gbdmn"]
+[ext_resource type="PackedScene" uid="uid://cxed0urgsmwwm" path="res://screens/gallery_thumbnail.tscn" id="2_pmmtb"]
+[ext_resource type="Texture2D" uid="uid://bmosowey6d04g" path="res://assets/backarrow.png" id="3_171e5"]
+[ext_resource type="Script" uid="uid://u0t0dnc50yu7" path="res://scripts/main_menu_button.gd" id="4_eqpjy"]
+
+[node name="Gallery" type="Control" unique_id=2114949479 node_paths=PackedStringArray("thumbnail_root")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_gbdmn")
+thumbnail_root = NodePath("ThumbnailRoot")
+thumnail_tscn = ExtResource("2_pmmtb")
+
+[node name="bg" type="ColorRect" parent="." unique_id=726254207]
+layout_mode = 0
+offset_left = -17.0
+offset_top = -20.0
+offset_right = 814.0
+offset_bottom = 1470.0
+color = Color(0, 0.44705883, 0.80784315, 1)
+
+[node name="ThumbnailRoot" type="Control" parent="." unique_id=236167973]
+anchors_preset = 0
+offset_left = 25.0
+offset_top = 86.0
+offset_right = 780.0
+offset_bottom = 1541.0
+
+[node name="Button" type="Button" parent="." unique_id=1727703009 node_paths=PackedStringArray("this_root")]
+layout_mode = 0
+offset_right = 81.0
+offset_bottom = 81.0
+icon = ExtResource("3_171e5")
+expand_icon = true
+script = ExtResource("4_eqpjy")
+this_root = NodePath("..")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="." unique_id=1299180133]
+layout_mode = 0
+offset_left = 287.0
+offset_top = -5.0
+offset_right = 572.0
+offset_bottom = 86.0
+theme_override_font_sizes/normal_font_size = 64
+text = "Gallery"

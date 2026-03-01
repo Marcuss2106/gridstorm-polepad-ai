@@ -31,7 +31,7 @@ func update_ui():
 
 func update_data():
 	pole_data.poleID = id_text.text
-	pole_data.poleType = pole_data.poleType
+	pole_data.poleType = type_text.text
 	pole_data.surroundings = []
 	if transformer_box.button_pressed:
 		pole_data.surroundings.append("transformer")
@@ -41,8 +41,10 @@ func update_data():
 		pole_data.surroundings.append("streetlight")
 	pole_data.vegetation = vegetation_options.selected
 
+func save_data():
+	ResourceSaver.save(pole_data, "data/pole_"+pole_data.poleID+".res")
 
 func _on_button_pressed() -> void:
 	update_data()
-	#get_tree().root.add_child(main_menu.instantiate())
+	save_data()
 	queue_free()
