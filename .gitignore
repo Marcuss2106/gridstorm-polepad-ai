@@ -15,5 +15,3 @@
 local.properties
 /model/.venv/
 
-/src/data/*
-/src/tempdata/*
