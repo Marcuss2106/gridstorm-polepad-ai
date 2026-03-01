@@ -60,12 +60,13 @@ func _ready() -> void:
 	_update_banner()
 	_update_submit_label()
 
-#func save_data():
-	#ResourceSaver.save(pole_data, "data/pole_"+pole_data.poleID+".res")
+func save_data():
+	ResourceSaver.save(_pole_data, "data/pole_"+_pole_data.poleID+".res")
 
-#func _on_button_pressed() -> void:
-	#update_data()
-	#save_data()
+func _on_button_pressed() -> void:
+	save_data()
+
+
 # ── Photo preview row ─────────────────────────────────────────────────────────
 
 func _build_photo_row() -> void:

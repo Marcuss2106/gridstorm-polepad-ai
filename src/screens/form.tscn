@@ -22,22 +22,20 @@ banner_label = NodePath("ReviewBanner/BannerLabel")
 field_vbox = NodePath("FieldScroll/FieldVBox")
 submit_btn = NodePath("SubmitBtn")
 
-[node name="BgRect" type="ColorRect" parent="."]
+[node name="BgRect" type="ColorRect" parent="." unique_id=73834908]
 layout_mode = 0
 offset_right = 840.0
 offset_bottom = 1456.0
 color = Color(0.15, 0.15, 0.15, 1)
 
-[node name="HeaderBar" type="ColorRect" parent="."]
+[node name="HeaderBar" type="ColorRect" parent="." unique_id=982217570]
 layout_mode = 0
 offset_right = 840.0
 offset_bottom = 90.0
 color = Color(0, 0.447, 0.808, 1)
 
-[node name="HeaderLabel" type="Label" parent="."]
+[node name="HeaderLabel" type="Label" parent="." unique_id=520167942]
 layout_mode = 0
-offset_left = 0.0
-offset_top = 0.0
 offset_right = 840.0
 offset_bottom = 90.0
 theme_override_font_sizes/font_size = 36
@@ -45,46 +43,44 @@ text = "Review AI Results"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ReviewBanner" type="Panel" parent="."]
+[node name="ReviewBanner" type="Panel" parent="." unique_id=603214710]
+visible = false
 layout_mode = 0
 offset_top = 90.0
 offset_right = 840.0
 offset_bottom = 175.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_banner")
-visible = false
 
-[node name="BannerLabel" type="Label" parent="ReviewBanner"]
+[node name="BannerLabel" type="Label" parent="ReviewBanner" unique_id=1606187052]
 layout_mode = 0
 offset_left = 14.0
-offset_top = 0.0
 offset_right = 826.0
 offset_bottom = 85.0
 theme_override_font_sizes/font_size = 26
-autowrap_mode = 3
 text = "Some fields need quick review — we highlighted uncertain results."
-horizontal_alignment = 0
 vertical_alignment = 1
+autowrap_mode = 3
 
-[node name="FieldScroll" type="ScrollContainer" parent="."]
+[node name="FieldScroll" type="ScrollContainer" parent="." unique_id=1783541385]
 layout_mode = 0
 offset_top = 175.0
 offset_right = 840.0
 offset_bottom = 1350.0
 
-[node name="FieldVBox" type="VBoxContainer" parent="FieldScroll"]
+[node name="FieldVBox" type="VBoxContainer" parent="FieldScroll" unique_id=1956007114]
+custom_minimum_size = Vector2(840, 0)
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(840, 0)
 theme_override_constants/separation = 10
 
-[node name="FooterBar" type="ColorRect" parent="."]
+[node name="FooterBar" type="ColorRect" parent="." unique_id=1251378001]
 layout_mode = 0
 offset_top = 1350.0
 offset_right = 840.0
 offset_bottom = 1456.0
 color = Color(0, 0.447, 0.808, 1)
 
-[node name="SubmitBtn" type="Button" parent="."]
+[node name="SubmitBtn" type="Button" parent="." unique_id=485519861]
 layout_mode = 0
 offset_left = 100.0
 offset_top = 1365.0
