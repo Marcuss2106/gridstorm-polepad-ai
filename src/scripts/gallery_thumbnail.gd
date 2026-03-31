@@ -5,7 +5,7 @@ extends Control
 @export var texture_rect : TextureRect
 @export var text_label : RichTextLabel
 
-const DATA_DIR = "res://data/"
+const DATA_DIR = "user://data/"
 const FORM_SCENE = preload("uid://y33a508r54up")
 
 

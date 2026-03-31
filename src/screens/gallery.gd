@@ -3,7 +3,7 @@ extends Control
 @export var thumbnail_root : Control
 @export var thumnail_tscn : PackedScene
 var poles : Array[PoleData]
-const DATA_DIR = "res://data/"
+const DATA_DIR = "user://data/"
 const COL_COUNT = 3
 const COL_SPACING = 260
 const ROW_SPACING = 300
