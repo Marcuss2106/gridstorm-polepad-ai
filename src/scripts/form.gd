@@ -1,8 +1,9 @@
 extends Control
 
 # ── Set to match camera_ui.gd ────────────────────────────────────────────────
-const API_HOST   := "http://10.35.241.238"
-const API_PORT   := 8000
+const ApiConfig  := preload("res://scripts/api_config.gd")
+const API_HOST   := ApiConfig.API_HOST
+const API_PORT   := ApiConfig.API_PORT
 var   SUBMIT_URL := API_HOST + ":" + str(API_PORT) + "/submit"
 
 # ── Wired in form.tscn ───────────────────────────────────────────────────────
