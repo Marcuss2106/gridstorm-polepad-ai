@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://bmosowey6d04g" path="res://assets/backarrow.png" id="4_0r2tk"]
 [ext_resource type="Script" uid="uid://u0t0dnc50yu7" path="res://scripts/main_menu_button.gd" id="5_d5tos"]
 
-[node name="CameraUi" type="Control" unique_id=2036629600 node_paths=PackedStringArray("textlabel", "subviewport")]
+[node name="CameraUi" type="Control" unique_id=2036629600 node_paths=PackedStringArray("textlabel", "subviewport", "camera_node")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -16,6 +16,7 @@ grow_vertical = 2
 script = ExtResource("1_qqbgj")
 textlabel = NodePath("RichTextLabel")
 subviewport = NodePath("SubViewportContainer/SubViewport")
+camera_node = NodePath("SubViewportContainer")
 
 [node name="ColorRect3" type="ColorRect" parent="." unique_id=269611255]
 layout_mode = 0
@@ -39,6 +40,16 @@ offset_top = 1164.0
 offset_right = 799.0
 offset_bottom = 1443.0
 color = Color(0, 0.44705883, 0.80784315, 1)
+
+[node name="welcometext" type="RichTextLabel" parent="." unique_id=74614819]
+layout_mode = 0
+offset_left = 182.0
+offset_top = 660.0
+offset_right = 636.0
+offset_bottom = 711.0
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "[center]Loading..."
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="." unique_id=510152363]
 z_index = 3
