@@ -42,6 +42,7 @@ offset_top = 1277.0
 offset_right = 486.0
 offset_bottom = 1428.0
 icon = ExtResource("1_6b72x")
+icon_alignment = 1
 script = ExtResource("2_ee7ou")
 to_scene = ExtResource("3_cbuj4")
 this_root = NodePath("..")
@@ -53,6 +54,7 @@ offset_top = 1276.0
 offset_right = 240.0
 offset_bottom = 1427.0
 icon = ExtResource("2_la406")
+icon_alignment = 1
 expand_icon = true
 script = ExtResource("2_ee7ou")
 to_scene = ExtResource("5_cbuj4")
@@ -65,6 +67,7 @@ offset_top = 1277.0
 offset_right = 709.0
 offset_bottom = 1427.0
 icon = ExtResource("3_ee7ou")
+icon_alignment = 1
 expand_icon = true
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=834293579]
@@ -75,3 +78,13 @@ offset_right = 834.0
 offset_bottom = 188.0
 texture = ExtResource("4_cbuj4")
 expand_mode = 1
+
+[node name="welcometext" type="RichTextLabel" parent="." unique_id=148223085]
+layout_mode = 0
+offset_left = 182.0
+offset_top = 660.0
+offset_right = 636.0
+offset_bottom = 711.0
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "[center]Welcome to Polepad AI"

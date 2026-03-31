@@ -8,6 +8,7 @@ var   ANALYZE_URL := API_HOST + ":" + str(API_PORT) + "/analyze"
 
 @export var textlabel  : RichTextLabel
 @export var subviewport: SubViewport
+@export var camera_node : CanvasItem
 
 var pic_count  := 0
 var first_pic  : Image
@@ -20,6 +21,7 @@ func _ready() -> void:
 	_http = HTTPRequest.new()
 	add_child(_http)
 	_http.request_completed.connect(_on_request_completed)
+	camera_node.visible = true
 
 
 func _on_camera_button_pressed() -> void:
@@ -35,6 +37,7 @@ func _on_camera_button_pressed() -> void:
 		second_pic = img
 		img.save_jpg("user://tempdata/pole.jpg")
 		GlobalData.pole_data = PoleData.create_from_pics([first_pic, second_pic])
+		camera_node.visible = false
 		_send_to_api(first_pic, second_pic)
 
 
