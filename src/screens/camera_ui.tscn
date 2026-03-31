@@ -3,6 +3,8 @@
 [ext_resource type="PackedScene" uid="uid://cedxrfaiu52lj" path="res://camera/cam.tscn" id="1_hnq63"]
 [ext_resource type="Script" uid="uid://si40hdv2retx" path="res://scripts/camera_ui.gd" id="1_qqbgj"]
 [ext_resource type="Texture2D" uid="uid://cafw3wjop25mf" path="res://assets/camicon.png" id="2_qqbgj"]
+[ext_resource type="Texture2D" uid="uid://bmosowey6d04g" path="res://assets/backarrow.png" id="4_0r2tk"]
+[ext_resource type="Script" uid="uid://u0t0dnc50yu7" path="res://scripts/main_menu_button.gd" id="5_d5tos"]
 
 [node name="CameraUi" type="Control" unique_id=2036629600 node_paths=PackedStringArray("textlabel", "subviewport")]
 layout_mode = 3
@@ -77,5 +79,17 @@ offset_bottom = 192.0
 theme_override_font_sizes/normal_font_size = 48
 bbcode_enabled = true
 text = "[center]text"
+
+[node name="BackButton" type="Button" parent="." unique_id=1178408083 node_paths=PackedStringArray("this_root")]
+z_index = 10
+layout_mode = 0
+offset_left = 84.0
+offset_top = 1268.0
+offset_right = 169.0
+offset_bottom = 1351.0
+icon = ExtResource("4_0r2tk")
+expand_icon = true
+script = ExtResource("5_d5tos")
+this_root = NodePath("..")
 
 [connection signal="pressed" from="CameraButton" to="." method="_on_camera_button_pressed"]

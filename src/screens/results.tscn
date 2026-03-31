@@ -1,8 +1,12 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cynnmtv6rdo3t"]
 
 [ext_resource type="Script" path="res://scripts/results.gd" id="1_results"]
+[ext_resource type="Texture2D" uid="uid://bmosowey6d04g" path="res://assets/backarrow.png" id="2_jtnho"]
+[ext_resource type="Script" uid="uid://u0t0dnc50yu7" path="res://scripts/main_menu_button.gd" id="3_4a1va"]
+[ext_resource type="Texture2D" uid="uid://d0yjupy5osn2j" path="res://assets/trashcan.png" id="4_7amsg"]
+[ext_resource type="Script" uid="uid://bqoglvllyslos" path="res://scripts/delete_button.gd" id="5_4a1va"]
 
-[node name="Results" type="Control" node_paths=PackedStringArray("annotated_image_rect", "pole_id_label", "pole_type_label", "components_label", "encroachment_label", "severity_label")]
+[node name="Results" type="Control" unique_id=1214814632 node_paths=PackedStringArray("annotated_image_rect", "pole_id_label", "pole_type_label", "components_label", "encroachment_label", "severity_label")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -17,19 +21,19 @@ components_label = NodePath("InfoPanel/ComponentsLabel")
 encroachment_label = NodePath("InfoPanel/EncroachmentLabel")
 severity_label = NodePath("InfoPanel/SeverityLabel")
 
-[node name="BgRect" type="ColorRect" parent="."]
+[node name="BgRect" type="ColorRect" parent="." unique_id=420453962]
 layout_mode = 0
 offset_right = 840.0
 offset_bottom = 1456.0
 color = Color(0.15, 0.15, 0.15, 1)
 
-[node name="HeaderBar" type="ColorRect" parent="."]
+[node name="HeaderBar" type="ColorRect" parent="." unique_id=1941542449]
 layout_mode = 0
 offset_right = 800.0
 offset_bottom = 90.0
 color = Color(0, 0.44705883, 0.80784315, 1)
 
-[node name="HeaderLabel" type="RichTextLabel" parent="."]
+[node name="HeaderLabel" type="RichTextLabel" parent="." unique_id=550304440]
 layout_mode = 0
 offset_left = 16.0
 offset_top = 8.0
@@ -39,7 +43,7 @@ theme_override_font_sizes/normal_font_size = 40
 bbcode_enabled = true
 text = "[center][b]AI Analysis Results[/b][/center]"
 
-[node name="AnnotatedImage" type="TextureRect" parent="."]
+[node name="AnnotatedImage" type="TextureRect" parent="." unique_id=405501204]
 layout_mode = 0
 offset_left = 8.0
 offset_top = 100.0
@@ -48,7 +52,7 @@ offset_bottom = 680.0
 expand_mode = 1
 stretch_mode = 5
 
-[node name="InfoPanel" type="VBoxContainer" parent="."]
+[node name="InfoPanel" type="VBoxContainer" parent="." unique_id=139606501]
 layout_mode = 0
 offset_left = 20.0
 offset_top = 694.0
@@ -56,54 +60,54 @@ offset_right = 780.0
 offset_bottom = 1320.0
 theme_override_constants/separation = 24
 
-[node name="PoleIdLabel" type="RichTextLabel" parent="InfoPanel"]
-layout_mode = 2
+[node name="PoleIdLabel" type="RichTextLabel" parent="InfoPanel" unique_id=1692643666]
 custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
 theme_override_font_sizes/normal_font_size = 36
 bbcode_enabled = true
-fit_content = true
 text = "[b]Pole ID:[/b]  —"
+fit_content = true
 
-[node name="PoleTypeLabel" type="RichTextLabel" parent="InfoPanel"]
-layout_mode = 2
+[node name="PoleTypeLabel" type="RichTextLabel" parent="InfoPanel" unique_id=302109732]
 custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
 theme_override_font_sizes/normal_font_size = 36
 bbcode_enabled = true
-fit_content = true
 text = "[b]Pole Type:[/b]  —"
+fit_content = true
 
-[node name="ComponentsLabel" type="RichTextLabel" parent="InfoPanel"]
-layout_mode = 2
+[node name="ComponentsLabel" type="RichTextLabel" parent="InfoPanel" unique_id=1978907528]
 custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
 theme_override_font_sizes/normal_font_size = 36
 bbcode_enabled = true
-fit_content = true
 text = "[b]Components:[/b]  —"
+fit_content = true
 
-[node name="EncroachmentLabel" type="RichTextLabel" parent="InfoPanel"]
-layout_mode = 2
+[node name="EncroachmentLabel" type="RichTextLabel" parent="InfoPanel" unique_id=2095393936]
 custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
 theme_override_font_sizes/normal_font_size = 38
 bbcode_enabled = true
-fit_content = true
 text = "—"
+fit_content = true
 
-[node name="SeverityLabel" type="RichTextLabel" parent="InfoPanel"]
-layout_mode = 2
+[node name="SeverityLabel" type="RichTextLabel" parent="InfoPanel" unique_id=1293943474]
 custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
 theme_override_font_sizes/normal_font_size = 36
 bbcode_enabled = true
-fit_content = true
 text = "[b]Vegetation:[/b]  —"
+fit_content = true
 
-[node name="FooterBar" type="ColorRect" parent="."]
+[node name="FooterBar" type="ColorRect" parent="." unique_id=815424978]
 layout_mode = 0
 offset_top = 1340.0
 offset_right = 800.0
 offset_bottom = 1440.0
 color = Color(0, 0.44705883, 0.80784315, 1)
 
-[node name="EditButton" type="Button" parent="."]
+[node name="EditButton" type="Button" parent="." unique_id=1679691326]
 layout_mode = 0
 offset_left = 200.0
 offset_top = 1355.0
@@ -111,5 +115,28 @@ offset_right = 600.0
 offset_bottom = 1430.0
 theme_override_font_sizes/font_size = 40
 text = "Edit & Submit"
+
+[node name="BackButton" type="Button" parent="." unique_id=433037741 node_paths=PackedStringArray("this_root")]
+layout_mode = 0
+offset_left = 13.0
+offset_top = 8.0
+offset_right = 85.0
+offset_bottom = 78.0
+icon = ExtResource("2_jtnho")
+expand_icon = true
+script = ExtResource("3_4a1va")
+this_root = NodePath("..")
+
+[node name="DeleteButton" type="Button" parent="." unique_id=1913712345 node_paths=PackedStringArray("this_root")]
+layout_mode = 0
+offset_left = 714.0
+offset_top = 8.0
+offset_right = 786.0
+offset_bottom = 78.0
+icon = ExtResource("4_7amsg")
+icon_alignment = 1
+expand_icon = true
+script = ExtResource("5_4a1va")
+this_root = NodePath("..")
 
 [connection signal="pressed" from="EditButton" to="." method="_on_edit_button_pressed"]
