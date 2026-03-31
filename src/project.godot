@@ -16,7 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="Dominion Energy Polepad AI"
 config/description="Team Corporate Inc.'s Submission to the February 2026 Dominion Energy Hackathon"
-config/version="1.0.4"
+config/version="1.1.0"
 run/main_scene="uid://34b6yye70imh"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="uid://c70hvisf0ugmv"
