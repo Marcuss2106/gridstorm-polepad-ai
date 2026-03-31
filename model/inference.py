@@ -77,10 +77,25 @@ PLATE_LIKE_PATTERNS = (
 _detect_model = None
 _seg_model    = None
 _ocr_reader   = None
+_torchvision_lib_guard = None
 
 DETECT_CLASSES: dict[int, str] = {}
 SEG_CLASSES:    dict[int, str] = {}
 POLE_CLASS_IDS: set[int]       = set()
+
+
+def _ensure_torchvision_nms_operator() -> None:
+    """
+    Work around torchvision import failures in some torch/torchvision builds.
+    """
+    global _torchvision_lib_guard
+    try:
+        import torch  # noqa: PLC0415
+        _torchvision_lib_guard = torch.library.Library("torchvision", "DEF")
+        _torchvision_lib_guard.define("nms(Tensor dets, Tensor scores, float iou_threshold) -> Tensor")
+    except Exception:
+        # No-op when the operator already exists or torch is unavailable.
+        pass
 
 
 def load_models() -> None:
@@ -93,6 +108,7 @@ def load_models() -> None:
     global DETECT_CLASSES, SEG_CLASSES, POLE_CLASS_IDS
 
     try:
+        _ensure_torchvision_nms_operator()
         print("[inference] Importing ultralytics...")
         from ultralytics import YOLO  # noqa: PLC0415
     except Exception:
@@ -631,6 +647,8 @@ def run_ocr(png_bytes: bytes) -> tuple[str, float, str, list[dict]]:
     orig_raw_results: list[tuple] = []
     all_preds:        list[tuple[str, float]] = []
     best_by_text:     dict[str, tuple[float, float]] = {}
+    successful_variants = 0
+    last_ocr_exc: Exception | None = None
 
     with tempfile.TemporaryDirectory(prefix="polepad_ocr_") as _tmp:
         tmp_dir = Path(_tmp)
@@ -640,7 +658,9 @@ def run_ocr(png_bytes: bytes) -> tuple[str, float, str, list[dict]]:
             try:
                 raw_result = _ocr_reader.predict(str(tmp_path))
                 results    = _extract_paddle_candidates(raw_result)
-            except Exception:
+                successful_variants += 1
+            except Exception as exc:
+                last_ocr_exc = exc
                 results = []
             for raw_bbox, raw_text, confidence in results:
                 norm = _normalize_ocr_text(raw_text)
@@ -655,6 +675,11 @@ def run_ocr(png_bytes: bytes) -> tuple[str, float, str, list[dict]]:
                 existing = best_by_text.get(norm)
                 if existing is None or conf > existing[0]:
                     best_by_text[norm] = (conf, score)
+
+    # If every variant crashed, surface the OCR backend error instead of
+    # returning a misleading "no detections" result.
+    if successful_variants == 0 and last_ocr_exc is not None:
+        raise RuntimeError(f"PaddleOCR prediction failed: {last_ocr_exc}") from last_ocr_exc
 
     best_text, raw_conf = "", 0.0
     if best_by_text:
